@@ -33,11 +33,11 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "artifactName": "Certy Music Setup.exe",
+      "artifactName": "CertyMusic-Setup.exe",
       "deleteAppDataOnUninstall": true
     },
     "portable": {
-      "artifactName": "Certy Music.exe"
+      "artifactName": "CertyMusic.exe"
     },
     "electronFuses": {
       "runAsNode": false,
