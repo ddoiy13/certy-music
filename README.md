@@ -1,2 +1,31 @@
-# unofficial-yt-music
-An unofficial YouTube Music desktop app that includes the “Better Lyrics” extension
+# Certy Music
+An unofficial desktop app for YouTube Music that includes the "Better Lyrics" extension
+
+<p align="left">
+ <a aria-label="License" href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GPL_v3-blue.svg" alt=""/></a>
+</p>
+
+## Introduction
+An unofficial Windows desktop app that wraps YouTube Music in Electron. It adds global media shortcuts (play/pause, next, previous), bundles the Better Lyrics extension for time-synced lyrics, and shows what you're listening to as a Discord activity.
+
+## Download
+1. Download from the [Release](https://github.com/ddoiy13/certy-music/releases) page.
+2. Install it, then log in to use it.
+
+## Changes to Better Lyrics
+The bundled extension in `extensions/better-lyrics/` is the official Better Lyrics 2.4.1 Chrome build. Electron implements only part of the Chrome extension API, so the following changes were made. Nothing else was modified.
+
+- **Added `electron-shim.js`**: fills in the `chrome.*` APIs that Electron is missing or breaks.
+  - `chrome.windows.onRemoved`: added as a no-op event.
+  - `chrome.storage.sync`: Electron's native sync area throws, so it is replaced with a wrapper backed by `chrome.storage.local`, including `onChanged` forwarding.
+- **Load the shim**:
+  - `manifest.json`: added a content script entry for `electron-shim.js` at the top of `content_scripts` (`music.youtube.com`, `document_start`). The file is also re-indented.
+  - `background/service_worker.js`: added `import '../electron-shim.js';` as the first line.
+  - `action/index.html`, `options/index.html`, `pages/{auth,marketplace,standalone-editor,unison}.html`: added `<script src="/electron-shim.js"></script>` right after `<head>`.
+
+## Trademarks
+YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google's guidelines. This project is not affiliated with, endorsed by, or sponsored by Google LLC or YouTube.
+Discord is a trademark of Discord Inc.
+
+## Reference
+[Better Lyrics](https://github.com/better-lyrics/better-lyrics)

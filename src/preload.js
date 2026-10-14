@@ -79,7 +79,7 @@ function record(action, btn, err) {
   if (recording === btn) return;
   recording = btn;
   const prev = btn.textContent;
-  btn.textContent = '키를 누르세요… (Esc 취소)';
+  btn.textContent = '키를 누르세요… (Esc로 취소)';
   err.textContent = '';
   function cleanup() {
     if (recording === btn) recording = null;
@@ -160,10 +160,10 @@ async function renderPanel() {
   const panel = h('div', { padding: '24px 32px', color: '#fff', font: '14px/1.5 Roboto, sans-serif', maxWidth: '640px', flex: '1 1 auto', minWidth: '0' });
   panel.id = PANEL_ID;
   panel.appendChild(h('h2', { margin: '0 0 8px', font: '500 20px Roboto, sans-serif' }, '앱 설정'));
-  panel.appendChild(
-    h('p', { margin: '0 0 24px', opacity: '0.7' },
-      `미디어 키(${Object.values(state.mediaKeys).join(', ')})는 항상 함께 동작합니다.`),
-  );
+  // panel.appendChild(
+  //   h('p', { margin: '0 0 24px', opacity: '0.7' },
+  //     `미디어 키(${Object.values(state.mediaKeys).join(', ')})는 항상 함께 동작합니다.`),
+  // );
   for (const action of Object.keys(LABELS)) panel.appendChild(shortcutRow(action, state));
   panel.appendChild(discordRow(state));
   if (state.betterLyrics) {

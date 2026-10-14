@@ -1,7 +1,7 @@
 {
-  "name": "unofficial-yt-music",
+  "name": "Certy-Music",
   "version": "1.0.0",
-  "description": "Unofficial YouTube Music",
+  "description": "An unofficial desktop app for YouTube Music",
   "main": "src/main.js",
   "private": true,
   "scripts": {
@@ -10,8 +10,8 @@
     "dist": "electron-builder --win nsis"
   },
   "build": {
-    "appId": "local.ytmusic.electron",
-    "productName": "Unofficial YouTube Music",
+    "appId": "local.certy.electron",
+    "productName": "Certy Music",
     "directories": {
       "output": "dist"
     },
@@ -33,11 +33,11 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "artifactName": "Unofficial YouTube Music Setup.exe",
+      "artifactName": "Certy Music Setup.exe",
       "deleteAppDataOnUninstall": true
     },
     "portable": {
-      "artifactName": "Unofficial YouTube Music.exe"
+      "artifactName": "Certy Music.exe"
     },
     "electronFuses": {
       "runAsNode": false,

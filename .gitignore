@@ -1,24 +1,26 @@
-# 의존성
 node_modules/
 
-# 빌드 결과물
+# Build output
 dist/
 out/
 
-# 로그
+# logs
 *.log
 npm-debug.log*
 
-# 환경 변수
+# Environment Variables
 .env
 .env.*
 
-# OS / 에디터
+# OS / Editor
 .DS_Store
 Thumbs.db
 desktop.ini
 .vscode/
 .idea/
 
-# Claude Code 로컬 설정
+# Claude Code Local Settings
 .claude/settings.local.json
+
+# Other
+*.png
