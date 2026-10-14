@@ -1,0 +1,35 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+A Windows Electron app wrapping `music.youtube.com`. It includes global shortcuts (play/pause, next, previous) and the Better Lyrics extension. User-facing text is written in Korean. This is not a git repository. Designs and plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+
+## Commands
+
+- `npm start`: run in development
+- `npm test`: `node --test test/*.test.js`. For a single file: `node --test test/settings.test.js`
+- `npm run dist`: build the NSIS installer (`dist/Youtube Music Setup.exe`)
+- Debugging: start with `YTM_DEBUG_PORT=9222 npm start` (ignored in packaged builds), then evaluate JS in the running page with `node scripts/cdp.js "<JS expression>"`. `node scripts/cdp.js --targets` prints the list of targets.
+
+## Structure
+
+- `src/main.js`: window creation, global shortcut registration, IPC handlers, external link guard. The logic is split out into pure modules.
+  - `settings.js`: loads/saves `userData/settings.json` and validates shortcuts. A corrupted file is recovered with defaults.
+  - `shortcuts.js`: wrapper around `globalShortcut`. Media keys are fixed; only user-defined shortcuts can be changed.
+  - `player.js`: controls playback by clicking player bar buttons via `executeJavaScript`. All YouTube Music DOM selectors are kept in one place, `SELECTORS`.
+  - `extension.js`: loads `extensions/better-lyrics/` into the same session and opens its options window.
+- `src/preload.js`: injects an "앱 설정" (App Settings) tab into the YouTube Music settings screen. It manipulates the DOM directly in the isolated world and does not use `contextBridge`. Selectors for the settings screen are kept in the `SEL` object.
+- `test/`: tests only the pure modules (`settings`, `shortcuts`, `player`). `main.js` and `preload.js` are verified by running the app.
+
+## Constraints to Follow
+
+- **Session**: the window and the extension both use the `persist:ytmusic` partition. Any new window must use the same session so that login and the extension are shared.
+- **IPC trust**: `trusted()` in `main.js` only allows IPC coming from the main frame of `music.youtube.com`. Any new handler must also go through this check.
+- **Navigation guard**: applied to every webContents in `web-contents-created`. `https` links outside YouTube/Google are sent to `shell.openExternal`; all other protocols are blocked.
+- **Trusted Types**: `innerHTML` cannot be used on YouTube pages. `preload.js` uses only `createElement`, `textContent`, and `element.style`.
+- **User-Agent**: keep the default. Removing the `Electron` token blocks Google login.
+- **Login redirect**: when a logged-out session is redirected to `/premium` or `/musicpremium`, `will-redirect` sends it to the Google login URL exactly once. The `loginRedirected` flag prevents an infinite loop.
+- **Cookie encryption**: packaged builds enable the `enableCookieEncryption` fuse. Development runs use a separate `userData` directory, `yt-music-electron-dev`, because an electron binary without the fuse corrupts the packaged app's cookie store if it touches it. Do not remove this separation code.
+- **Extension**: `extensions/better-lyrics/` is a snapshot (2.4.1) of the official Chrome build. It has no auto-update and is packaged outside the asar via `extraResources`. Some behavior needs to be verified empirically in Electron (e.g., the MV3 service worker). The only local changes are for `electron-shim.js`, which fills in `chrome.*` APIs missing in Electron: the shim file itself, a content script entry at the top of `manifest.json`, an `import` on the first line of `background/service_worker.js`, and a `<script>` tag right after `<head>` in the 6 HTML pages (`action`, `options`, `pages/*`). Re-apply these when replacing the snapshot.

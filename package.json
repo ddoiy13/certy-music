@@ -1,0 +1,56 @@
+{
+  "name": "unofficial-yt-music",
+  "version": "1.0.0",
+  "description": "Unofficial YouTube Music",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "local.ytmusic.electron",
+    "productName": "Unofficial YouTube Music",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "extensions/better-lyrics",
+        "to": "extensions/better-lyrics"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/app.ico",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "Unofficial YouTube Music Setup.exe",
+      "deleteAppDataOnUninstall": true
+    },
+    "portable": {
+      "artifactName": "Unofficial YouTube Music.exe"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.5.1"
+  }
+}
