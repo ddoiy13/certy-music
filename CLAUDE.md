@@ -4,24 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A Windows Electron app wrapping `music.youtube.com`. It includes global shortcuts (play/pause, next, previous) and the Better Lyrics extension. User-facing text is written in Korean. This is not a git repository. Designs and plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+A Windows Electron app wrapping `music.youtube.com`. It includes global shortcuts (play/pause, next, previous), the Better Lyrics extension, and Discord "Listening to" activity. User-facing text is written in Korean. This is a git repository (remote: `ddoiy13/certy-music`). Designs and plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 ## Commands
 
 - `npm start`: run in development
 - `npm test`: `node --test test/*.test.js`. For a single file: `node --test test/settings.test.js`
-- `npm run dist`: build the NSIS installer (`dist/Youtube Music Setup.exe`)
+- `npm run dist`: build the NSIS installer (`dist/Certy Music Setup.exe`)
 - Debugging: start with `YTM_DEBUG_PORT=9222 npm start` (ignored in packaged builds), then evaluate JS in the running page with `node scripts/cdp.js "<JS expression>"`. `node scripts/cdp.js --targets` prints the list of targets.
 
 ## Structure
 
 - `src/main.js`: window creation, global shortcut registration, IPC handlers, external link guard. The logic is split out into pure modules.
-  - `settings.js`: loads/saves `userData/settings.json` and validates shortcuts. A corrupted file is recovered with defaults.
+  - `settings.js`: loads/saves `userData/settings.json` and validates shortcuts, window bounds, and the `discord` toggle (default on). A corrupted file is recovered with defaults.
   - `shortcuts.js`: wrapper around `globalShortcut`. Media keys are fixed; only user-defined shortcuts can be changed.
   - `player.js`: controls playback by clicking player bar buttons via `executeJavaScript`. All YouTube Music DOM selectors are kept in one place, `SELECTORS`.
+  - `presence.js`: Discord Rich Presence via `@xhayper/discord-rpc`. `main.js` polls `player.readTrack` every 3 seconds and sends the track as a "Listening" activity. It does not affect the app when Discord is closed and reconnects every 15 seconds. `buildActivity` and `sameActivity` are pure functions; the client is injectable for tests. The toggle lives in the app settings tab (`settings:setDiscord`). `CLIENT_ID` is a Discord application ID, which is not a secret.
   - `extension.js`: loads `extensions/better-lyrics/` into the same session and opens its options window.
 - `src/preload.js`: injects an "앱 설정" (App Settings) tab into the YouTube Music settings screen. It manipulates the DOM directly in the isolated world and does not use `contextBridge`. Selectors for the settings screen are kept in the `SEL` object.
-- `test/`: tests only the pure modules (`settings`, `shortcuts`, `player`). `main.js` and `preload.js` are verified by running the app.
+- `test/`: tests only the pure modules (`settings`, `shortcuts`, `player`, `presence`). `main.js` and `preload.js` are verified by running the app.
 
 ## Constraints to Follow
 
