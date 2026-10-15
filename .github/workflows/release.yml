@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify tag matches package.json version
+        shell: bash
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "v$PKG_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version v$PKG_VERSION"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run dist
+
+      - name: Create GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FLAGS=""
+          case "$GITHUB_REF_NAME" in
+            *-*) FLAGS="--prerelease" ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/CertyMusic-Setup.exe" \
+            "dist/CertyMusic-Setup.exe.blockmap" \
+            "dist/latest.yml" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            $FLAGS
