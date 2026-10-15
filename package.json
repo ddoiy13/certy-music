@@ -1,17 +1,24 @@
 {
   "name": "Certy-Music",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An unofficial desktop app for YouTube Music",
   "main": "src/main.js",
   "private": true,
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
-    "dist": "electron-builder --win nsis"
+    "dist": "electron-builder --win nsis --publish never"
   },
   "build": {
     "appId": "local.certy.electron",
     "productName": "Certy Music",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ddoiy13",
+        "repo": "certy-music"
+      }
+    ],
     "directories": {
       "output": "dist"
     },
@@ -53,6 +60,8 @@
     "electron-builder": "^26.15.3"
   },
   "dependencies": {
-    "@xhayper/discord-rpc": "^1.5.1"
+    "@xhayper/discord-rpc": "^1.5.1",
+    "electron-updater": "^6.8.9",
+    "semver": "^7.8.5"
   }
 }
