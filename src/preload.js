@@ -149,6 +149,109 @@ function discordRow(state) {
   return row;
 }
 
+const CHANNEL_LABELS = { stable: 'Stable', prerelease: 'Pre-Release' };
+let renderUpdate = null; // 현재 열린 패널의 상태 갱신 함수. 패널이 닫히면 null
+
+function updateText(u) {
+  if (!u) return '';
+  switch (u.status) {
+    case 'checking': return '업데이트를 확인하는 중…';
+    case 'uptodate': return '최신 버전입니다.';
+    case 'available':
+      return u.downgrade
+        ? `이전 버전 v${u.version}으로 되돌릴 수 있습니다. 자동으로 설치되지 않습니다.`
+        : `새 버전 v${u.version}을 설치할 수 있습니다.`;
+    case 'downloading': return `v${u.version} 내려받는 중… ${u.percent}%`;
+    case 'ready': return `v${u.version} 설치 준비가 끝났습니다.`;
+    case 'error': return u.error || '업데이트 중 오류가 발생했습니다.';
+    default: return '';
+  }
+}
+
+function updateSection(state) {
+  const box = h('div', { margin: '24px 0 0', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.15)' });
+  box.appendChild(h('h3', { margin: '0 0 12px', font: '500 16px Roboto, sans-serif' }, '업데이트'));
+  box.appendChild(h('div', { margin: '0 0 12px', opacity: '0.7' }, `현재 버전 v${state.version}`));
+
+  const channelRow = h('div', { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 12px' });
+  channelRow.appendChild(h('div', { width: '140px' }, '빌드 버전'));
+  const select = document.createElement('select');
+  Object.assign(select.style, {
+    padding: '6px 10px', background: '#212121', color: '#fff',
+    border: '1px solid rgba(255,255,255,0.3)', borderRadius: '8px', font: '14px Roboto, sans-serif',
+  });
+  for (const [value, label] of Object.entries(CHANNEL_LABELS)) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    select.appendChild(opt);
+  }
+  select.value = state.updateChannel;
+  const channelErr = h('span', { color: '#ff6b6b', fontSize: '12px' });
+  channelRow.append(select, channelErr);
+  select.addEventListener('change', async (e) => {
+    if (e.isTrusted !== true) return;
+    const want = select.value;
+    const r = await invokeSafe('settings:setUpdateChannel', want);
+    if (r && r.ok) {
+      channelErr.textContent = '';
+      state.updateChannel = want;
+    } else {
+      select.value = state.updateChannel;
+      channelErr.textContent = (r && r.reason) || '요청에 실패했습니다.';
+    }
+  });
+  box.appendChild(channelRow);
+
+  const status = h('div', { margin: '0 0 12px', minHeight: '21px' });
+  const buttons = h('div', { display: 'flex', gap: '12px', margin: '0 0 12px' });
+  const check = h('button', BTN, '업데이트 확인');
+  const install = h('button', BTN, '업데이트 설치');
+  buttons.append(check, install);
+  check.addEventListener('click', (e) => {
+    if (e.isTrusted !== true) return;
+    invokeSafe('update:check');
+  });
+  install.addEventListener('click', (e) => {
+    if (e.isTrusted !== true) return;
+    invokeSafe('update:install');
+  });
+
+  renderUpdate = (u) => {
+    status.textContent = updateText(u);
+    status.style.color = u && u.status === 'error' ? '#ff6b6b' : '';
+    const busy = u && (u.status === 'checking' || u.status === 'downloading');
+    const canInstall = u && (u.status === 'available' || u.status === 'ready');
+    check.disabled = !!busy;
+    check.style.opacity = busy ? '0.5' : '1';
+    install.style.display = canInstall ? '' : 'none';
+    install.textContent = u && u.downgrade ? `v${u.version}으로 되돌리기` : '업데이트 설치';
+  };
+  renderUpdate(state.update);
+  box.append(status, buttons);
+
+  const autoRow = h('label', { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' });
+  const autoBox = document.createElement('input');
+  autoBox.type = 'checkbox';
+  autoBox.checked = !!state.autoUpdate;
+  Object.assign(autoBox.style, { width: '16px', height: '16px', cursor: 'pointer' });
+  const autoErr = h('span', { color: '#ff6b6b', fontSize: '12px' });
+  autoRow.append(autoBox, h('span', {}, '자동 업데이트 (새 버전을 받아 두었다가 앱을 종료할 때 설치)'), autoErr);
+  autoBox.addEventListener('change', async (e) => {
+    if (e.isTrusted !== true) return;
+    const want = autoBox.checked;
+    const r = await invokeSafe('settings:setAutoUpdate', want);
+    if (r && r.ok) {
+      autoErr.textContent = '';
+    } else {
+      autoBox.checked = !want;
+      autoErr.textContent = (r && r.reason) || '요청에 실패했습니다.';
+    }
+  });
+  box.appendChild(autoRow);
+  return box;
+}
+
 async function renderPanel() {
   let state = null;
   try {
@@ -166,6 +269,7 @@ async function renderPanel() {
   // );
   for (const action of Object.keys(LABELS)) panel.appendChild(shortcutRow(action, state));
   panel.appendChild(discordRow(state));
+  panel.appendChild(updateSection(state));
   if (state.betterLyrics) {
     const open = h('button', { ...BTN, marginTop: '16px' }, 'Better Lyrics 설정 열기');
     open.addEventListener('click', (e) => {
@@ -195,6 +299,7 @@ function hidePanel(page, clickedItem) {
   if (!panelShown) return;
   panelShown = false;
   document.getElementById(PANEL_ID)?.remove();
+  renderUpdate = null;
   const content = page.querySelector(SEL.content);
   if (content) content.style.display = '';
   const tab = document.getElementById(TAB_ID);
@@ -305,6 +410,10 @@ function schedule() {
     ensureTab();
   });
 }
+
+ipcRenderer.on('update:state', (_event, u) => {
+  if (renderUpdate && document.getElementById(PANEL_ID)) renderUpdate(u);
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
