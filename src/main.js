@@ -1,10 +1,11 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, session, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Notification, screen, session, shell } = require('electron');
 const path = require('node:path');
 const settingsStore = require('./settings');
 const { createShortcutManager, MEDIA_KEYS } = require('./shortcuts');
 const player = require('./player');
 const betterLyrics = require('./extension');
 const { createPresence } = require('./presence');
+const { createUpdater, shouldNotify } = require('./updater');
 
 const START_URL = 'https://music.youtube.com/';
 const LOGIN_URL = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=youtube&continue=' + encodeURIComponent('https://www.youtube.com/signin?action_handle_signin=true&next=' + encodeURIComponent('https://music.youtube.com/'));
@@ -28,6 +29,12 @@ let blExt = null;
 let presence = null;
 let presenceTimer = null;
 const PRESENCE_POLL_MS = 3000;
+let updater = null;
+let updateFirstTimer = null;
+let updateTimer = null;
+let notifiedVersion = null;
+const UPDATE_FIRST_CHECK_MS = 10 * 1000;
+const UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 
@@ -138,6 +145,29 @@ function startPresence() {
   }, PRESENCE_POLL_MS);
 }
 
+// 새 버전을 확인하고 상태를 설정 탭에 푸시한다. 새 버전은 버전마다 한 번만 알림으로 알린다.
+function startUpdater() {
+  updater = createUpdater({
+    autoUpdater: app.isPackaged ? require('electron-updater').autoUpdater : null,
+    currentVersion: app.getVersion(),
+    onState: (state) => {
+      if (win && !win.isDestroyed()) win.webContents.send('update:state', state);
+      if (shouldNotify(state, notifiedVersion)) {
+        notifiedVersion = state.version;
+        try {
+          new Notification({ title: 'Certy Music', body: `새 버전 v${state.version}이 있습니다. 앱 설정에서 업데이트할 수 있습니다.` }).show();
+        } catch (err) {
+          console.error('업데이트 알림을 띄우지 못했습니다:', err);
+        }
+      }
+    },
+  });
+  updater.setChannel(settings.updateChannel);
+  updater.setAutoUpdate(settings.autoUpdate);
+  updateFirstTimer = setTimeout(() => updater.check({ manual: false }), UPDATE_FIRST_CHECK_MS);
+  updateTimer = setInterval(() => updater.check({ manual: false }), UPDATE_INTERVAL_MS);
+}
+
 const handlers = {
   playPause: () => controlPlayer('playPause'),
   next: () => controlPlayer('next'),
@@ -184,6 +214,10 @@ ipcMain.handle('settings:get', (event) => {
     mediaKeys: MEDIA_KEYS,
     betterLyrics: !!blExt,
     discord: settings.discord,
+    version: app.getVersion(),
+    autoUpdate: settings.autoUpdate,
+    updateChannel: settings.updateChannel,
+    update: updater ? updater.getState() : null,
   };
 });
 ipcMain.handle('settings:setDiscord', (event, on) => {
@@ -199,6 +233,49 @@ ipcMain.handle('settings:setDiscord', (event, on) => {
   }
   if (presence) presence.setEnabled(on);
   return { ok: true, discord: on };
+});
+ipcMain.handle('settings:setAutoUpdate', (event, on) => {
+  if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: '허용되지 않은 요청입니다.' };
+  const previous = settings.autoUpdate;
+  settings.autoUpdate = on;
+  try {
+    settingsStore.save(settingsFile(), settings);
+  } catch (err) {
+    console.error('자동 업데이트 설정을 저장하지 못했습니다:', err);
+    settings.autoUpdate = previous;
+    return { ok: false, reason: '설정을 저장하지 못했습니다.' };
+  }
+  if (updater) updater.setAutoUpdate(on);
+  return { ok: true, autoUpdate: on };
+});
+ipcMain.handle('settings:setUpdateChannel', (event, channel) => {
+  if (!trusted(event) || !settingsStore.CHANNELS.includes(channel)) {
+    return { ok: false, reason: '허용되지 않은 요청입니다.' };
+  }
+  const previous = settings.updateChannel;
+  settings.updateChannel = channel;
+  try {
+    settingsStore.save(settingsFile(), settings);
+  } catch (err) {
+    console.error('빌드 버전 설정을 저장하지 못했습니다:', err);
+    settings.updateChannel = previous;
+    return { ok: false, reason: '설정을 저장하지 못했습니다.' };
+  }
+  if (updater) {
+    updater.setChannel(channel);
+    updater.check({ manual: true });
+  }
+  return { ok: true, updateChannel: channel };
+});
+ipcMain.handle('update:check', (event) => {
+  if (!trusted(event) || !updater) return { ok: false };
+  updater.check({ manual: true });
+  return { ok: true };
+});
+ipcMain.handle('update:install', (event) => {
+  if (!trusted(event) || !updater) return { ok: false };
+  updater.install();
+  return { ok: true };
 });
 ipcMain.handle('settings:setShortcut', (event, action, accelerator) =>
   trusted(event) ? applyShortcut(action, accelerator) : { ok: false, reason: '허용되지 않은 요청입니다.' },
@@ -230,12 +307,15 @@ if (!app.requestSingleInstanceLock()) {
     const failed = shortcuts.applyAll(settings.shortcuts);
     if (failed.length) console.warn('등록 실패한 단축키:', failed.join(', '));
     startPresence();
+    startUpdater();
   });
 
   app.on('window-all-closed', () => app.quit());
   app.on('will-quit', () => {
     globalShortcut.unregisterAll();
     clearInterval(presenceTimer);
+    clearTimeout(updateFirstTimer);
+    clearInterval(updateTimer);
     if (presence) presence.destroy();
   });
 }
