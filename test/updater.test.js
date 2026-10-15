@@ -259,3 +259,94 @@ test('shouldNotify: 같은 버전은 한 번만, 버전이 없거나 idle/uptoda
   }
   assert.equal(shouldNotify(st('available', null), null), false);
 });
+
+test('확인 중에 채널을 바꾸면 그 확인이 끝난 뒤 한 번 더 확인한다', async () => {
+  const { au, u } = setup();
+  let release;
+  let n = 0;
+  au.onCheck = () => {
+    n++;
+    return new Promise((r) => { release = r; });
+  };
+  const first = u.check({ manual: false });
+  au.emit('checking-for-update');
+  u.setChannel('prerelease');
+  await u.check({ manual: true });
+  assert.equal(n, 1);
+  au.onCheck = async () => {
+    n++;
+    au.emit('checking-for-update');
+    au.emit('update-not-available', { version: '1.1.0' });
+  };
+  release();
+  await first;
+  assert.equal(n, 2);
+  assert.equal(u.getState().status, 'uptodate');
+});
+
+test('백그라운드 확인 중에 누른 수동 확인이 실패하면 오류를 표시한다', async () => {
+  const { au, u } = setup();
+  let reject;
+  au.onCheck = () => new Promise((_, rej) => { reject = rej; });
+  const first = u.check({ manual: false });
+  au.emit('checking-for-update');
+  await u.check({ manual: true });
+  au.onCheck = async () => {
+    throw new Error('offline');
+  };
+  reject(new Error('offline'));
+  await first;
+  assert.equal(u.getState().status, 'error');
+  assert.equal(u.getState().error, 'offline');
+});
+
+test('백그라운드 확인이 실패해도 이미 발견된 업데이트 표시는 유지한다', async () => {
+  const { au, u } = setup();
+  findsUpdate(au);
+  await u.check({ manual: true });
+  assert.equal(u.getState().status, 'available');
+  au.onCheck = async () => {
+    const err = new Error('net::ERR_INTERNET_DISCONNECTED');
+    au.emit('error', err);
+    throw err;
+  };
+  await u.check({ manual: false });
+  assert.equal(u.getState().status, 'available');
+  assert.equal(u.getState().version, '1.2.0');
+  assert.equal(u.getState().error, null);
+});
+
+test('채널을 바꾼 뒤에는 이전 채널에서 발견한 업데이트가 실패 복구로 되살아나지 않는다', async () => {
+  const { au, u } = setup();
+  findsUpdate(au);
+  await u.check({ manual: true });
+  u.setChannel('prerelease');
+  au.onCheck = async () => {
+    const err = new Error('offline');
+    au.emit('error', err);
+    throw err;
+  };
+  await u.check({ manual: false });
+  assert.equal(u.getState().status, 'idle');
+  assert.equal(u.getState().version, null);
+});
+
+test('최신으로 확인된 뒤의 백그라운드 실패는 예전에 발견한 업데이트를 되살리지 않는다', async () => {
+  const { au, u } = setup();
+  findsUpdate(au);
+  await u.check({ manual: true });
+  au.onCheck = async () => {
+    au.emit('checking-for-update');
+    au.emit('update-not-available', { version: '1.1.0' });
+  };
+  await u.check({ manual: true });
+  assert.equal(u.getState().status, 'uptodate');
+  au.onCheck = async () => {
+    const err = new Error('offline');
+    au.emit('error', err);
+    throw err;
+  };
+  await u.check({ manual: false });
+  assert.equal(u.getState().status, 'idle');
+  assert.equal(u.getState().version, null);
+});
