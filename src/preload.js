@@ -236,7 +236,7 @@ function updateSection(state) {
   autoBox.checked = !!state.autoUpdate;
   Object.assign(autoBox.style, { width: '16px', height: '16px', cursor: 'pointer' });
   const autoErr = h('span', { color: '#ff6b6b', fontSize: '12px' });
-  autoRow.append(autoBox, h('span', {}, '자동 업데이트 (새 버전을 받아 두었다가 앱을 종료할 때 설치)'), autoErr);
+  autoRow.append(autoBox, h('span', {}, '자동 업데이트 (앱을 종료할 때 업데이트됨.)'), autoErr);
   autoBox.addEventListener('change', async (e) => {
     if (e.isTrusted !== true) return;
     const want = autoBox.checked;
