@@ -26,6 +26,10 @@ The bundled extension in `extensions/better-lyrics/` is the official Better Lyri
   - `background/service_worker.js`: added `import '../electron-shim.js';` as the first line.
   - `action/index.html`, `options/index.html`, `pages/{auth,marketplace,standalone-editor,unison}.html`: added `<script src="/electron-shim.js"></script>` right after `<head>`.
 
+## AI Disclosure
+Most of the code in this project was written by AI (Claude, by Anthropic). The bundled Better Lyrics extension is the work of its original authors and is not covered by this statement, apart from the changes listed above. Since the code was largely AI-generated, it may contain bugs or security issues.
+
+
 ## Trademarks
 YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google's guidelines. This project is not affiliated with, endorsed by, or sponsored by Google LLC or YouTube.
 Discord is a trademark of Discord Inc.
