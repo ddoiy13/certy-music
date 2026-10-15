@@ -10,7 +10,8 @@ A Windows Electron app wrapping `music.youtube.com`. It includes global shortcut
 
 - `npm start`: run in development
 - `npm test`: `node --test test/*.test.js`. For a single file: `node --test test/settings.test.js`
-- `npm run dist`: build the NSIS installer (`dist/Certy Music Setup.exe`)
+- `npm run dist`: build the NSIS installer (`dist/CertyMusic-Setup.exe` + `.blockmap` + `latest.yml`). It runs with `--publish never`; nothing is uploaded.
+- To try a different electron-builder config without touching `package.json` or `dist/`, write the whole `build` object to a temp JSON and run `npx electron-builder --win nsis --publish never --config <file>` with `directories.output` pointing elsewhere. `--config.publish.*` flags merge into the existing `publish` array and fail schema validation.
 - Debugging: start with `YTM_DEBUG_PORT=9222 npm start` (ignored in packaged builds), then evaluate JS in the running page with `node scripts/cdp.js "<JS expression>"`. `node scripts/cdp.js --targets` prints the list of targets.
 
 ## Structure
