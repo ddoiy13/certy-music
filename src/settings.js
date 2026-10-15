@@ -8,6 +8,7 @@ const DEFAULT_SHORTCUTS = Object.freeze({
   prev: 'Ctrl+Alt+Left',
 });
 const DEFAULT_WINDOW = Object.freeze({ width: 1280, height: 800 });
+const CHANNELS = Object.freeze(['stable', 'prerelease']);
 
 const MODIFIER_ALIASES = { ctrl: 'Ctrl', control: 'Ctrl', alt: 'Alt', shift: 'Shift', super: 'Super', meta: 'Super' };
 const MODIFIER_ORDER = ['Ctrl', 'Alt', 'Shift', 'Super'];
@@ -102,7 +103,13 @@ function load(file) {
   try {
     raw = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
   } catch {}
-  return { shortcuts: loadShortcuts(raw), window: loadWindow(raw), discord: raw.discord !== false };
+  return {
+    shortcuts: loadShortcuts(raw),
+    window: loadWindow(raw),
+    discord: raw.discord !== false,
+    autoUpdate: raw.autoUpdate === true,
+    updateChannel: raw.updateChannel === 'prerelease' ? 'prerelease' : 'stable',
+  };
 }
 
 function save(file, settings) {
@@ -112,4 +119,4 @@ function save(file, settings) {
   fs.renameSync(tmp, file);
 }
 
-module.exports = { ACTIONS, DEFAULT_SHORTCUTS, validateAccelerator, load, save };
+module.exports = { ACTIONS, CHANNELS, DEFAULT_SHORTCUTS, validateAccelerator, load, save };

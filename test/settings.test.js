@@ -83,6 +83,36 @@ test('discord 설정은 기본 true이고 false만 끈다', () => {
   assert.equal(s.load(f).discord, true);
 });
 
+test('autoUpdate는 기본 false이고 true일 때만 켜진다', () => {
+  const f = tmp();
+  assert.equal(s.load(f).autoUpdate, false);
+  fs.writeFileSync(f, JSON.stringify({ autoUpdate: true }));
+  assert.equal(s.load(f).autoUpdate, true);
+  for (const bad of ['yes', 1, null, {}]) {
+    fs.writeFileSync(f, JSON.stringify({ autoUpdate: bad }));
+    assert.equal(s.load(f).autoUpdate, false, String(bad));
+  }
+});
+
+test('updateChannel은 prerelease만 인정하고 나머지는 stable', () => {
+  const f = tmp();
+  assert.equal(s.load(f).updateChannel, 'stable');
+  fs.writeFileSync(f, JSON.stringify({ updateChannel: 'prerelease' }));
+  assert.equal(s.load(f).updateChannel, 'prerelease');
+  for (const bad of ['beta', 'Prerelease', 1, null, {}]) {
+    fs.writeFileSync(f, JSON.stringify({ updateChannel: bad }));
+    assert.equal(s.load(f).updateChannel, 'stable', String(bad));
+  }
+});
+
+test('깨진 파일이면 autoUpdate OFF, 채널 stable', () => {
+  const f = tmp();
+  fs.writeFileSync(f, '{not json');
+  const r = s.load(f);
+  assert.equal(r.autoUpdate, false);
+  assert.equal(r.updateChannel, 'stable');
+});
+
 const PUNCT = ['`', '-', '=', '[', ']', '\\', ';', "'", ',', '.', '/'];
 
 test('구두점 키 11개는 Ctrl+Alt+ 와 함께 유효하다', () => {
