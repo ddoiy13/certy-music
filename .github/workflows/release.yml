@@ -43,10 +43,21 @@ jobs:
           case "$GITHUB_REF_NAME" in
             *-*) FLAGS="--prerelease" ;;
           esac
+
+          # 자동 노트를 생성한 뒤 "New Contributors" 섹션만 제거한다
+          gh api -X POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$GITHUB_REF_NAME" --jq .body > notes-raw.md
+          node -e '
+            const fs = require("fs");
+            const text = fs.readFileSync("notes-raw.md", "utf8");
+            const out = text.replace(/^## New Contributors\r?\n[\s\S]*?(?=^\*\*Full Changelog\*\*|(?![\s\S]))/m, "");
+            fs.writeFileSync("notes.md", out);
+          '
+
           gh release create "$GITHUB_REF_NAME" \
             "dist/CertyMusic-Setup.exe" \
             "dist/CertyMusic-Setup.exe.blockmap" \
             "dist/latest.yml" \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes \
+            --notes-file notes.md \
             $FLAGS

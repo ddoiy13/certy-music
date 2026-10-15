@@ -155,7 +155,7 @@ function startUpdater() {
       if (shouldNotify(state, notifiedVersion)) {
         notifiedVersion = state.version;
         try {
-          new Notification({ title: 'Certy Music', body: `새 버전 v${state.version}이 있습니다. 앱 설정에서 업데이트할 수 있습니다.` }).show();
+          new Notification({ title: 'Certy Music', body: `새 버전이 있습니다. 앱 설정에서 업데이트할 수 있습니다. (v${state.version})` }).show();
         } catch (err) {
           console.error('업데이트 알림을 띄우지 못했습니다:', err);
         }
