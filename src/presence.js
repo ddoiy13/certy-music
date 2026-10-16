@@ -35,7 +35,8 @@ function sameActivity(a, b) {
   if (!a || !b) return a === b;
   for (const k of ['details', 'state', 'largeImageKey', 'largeImageText']) if (a[k] !== b[k]) return false;
   const da = Math.abs((a.startTimestamp || 0) - (b.startTimestamp || 0));
-  return da <= SEEK_TOLERANCE_MS;
+  const de = Math.abs((a.endTimestamp || 0) - (b.endTimestamp || 0));
+  return da <= SEEK_TOLERANCE_MS && de <= SEEK_TOLERANCE_MS;
 }
 
 function createPresence({ clientId = CLIENT_ID, createClient, retryMs = RETRY_MS, now = Date.now } = {}) {

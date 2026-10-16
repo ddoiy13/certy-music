@@ -26,6 +26,7 @@ const TRACK_SELECTORS = Object.freeze({
   byline: 'ytmusic-player-bar .byline',
   art: 'ytmusic-player-bar img.image',
   video: 'video',
+  progress: 'ytmusic-player-bar #progress-bar',
 });
 
 const TRACK_SCRIPT = `(() => {
@@ -34,13 +35,18 @@ const TRACK_SCRIPT = `(() => {
   const text = (sel) => (document.querySelector(sel)?.textContent || '').trim();
   const v = document.querySelector(S.video);
   const art = document.querySelector(S.art)?.src || '';
+  // video.currentTime/duration은 곡 전환 중이나 일부 곡에서 플레이어 바(화면에 보이는 시간)와 어긋난다.
+  // 바의 진행 막대를 기준으로 하고, 읽을 수 없을 때만 video 값을 쓴다.
+  const pb = document.querySelector(S.progress);
+  const barMax = pb ? Number(pb.max) : NaN;
+  const barOk = barMax > 0 && Number.isFinite(Number(pb.value));
   return {
     title: text(S.title),
     byline: text(S.byline),
     art,
     playing: !!v && !v.paused && !v.ended,
-    position: v ? v.currentTime : 0,
-    duration: v ? v.duration : 0,
+    position: barOk ? Number(pb.value) : v ? v.currentTime : 0,
+    duration: barOk ? barMax : v ? v.duration : 0,
   };
 })()`;
 
