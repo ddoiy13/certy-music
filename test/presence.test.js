@@ -44,6 +44,13 @@ test('같은 곡의 자연스러운 진행은 같은 활동, 탐색(seek)은 다
   assert.equal(sameActivity(a, buildActivity({ ...track, title: 'Other' }, 1_000_000)), false);
 });
 
+test('시작 시각이 같아도 곡 길이(종료 시각)가 바뀌면 다른 활동', () => {
+  // 자동 전환 직후 이전 곡의 길이가 잠깐 읽히는 경우를 가정한다.
+  const stale = buildActivity({ ...track, position: 0, duration: 200 }, 1_000_000);
+  const fixed = buildActivity({ ...track, position: 0, duration: 245 }, 1_000_000);
+  assert.equal(sameActivity(stale, fixed), false);
+});
+
 test('parseTrack은 byline을 아티스트/앨범으로 나누고 큰 아트로 바꾼다', () => {
   const t = parseTrack({ title: 'S', byline: 'Art • Alb • 2020', art: 'https://lh3.googleusercontent.com/x=w60-h60-l90-rj', playing: true, position: 1, duration: 2 });
   assert.equal(t.artist, 'Art');
