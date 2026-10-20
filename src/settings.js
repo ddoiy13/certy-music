@@ -9,6 +9,7 @@ const DEFAULT_SHORTCUTS = Object.freeze({
 });
 const DEFAULT_WINDOW = Object.freeze({ width: 1280, height: 800 });
 const CHANNELS = Object.freeze(['stable', 'prerelease']);
+const { LANGUAGES } = require('./i18n');
 
 const MODIFIER_ALIASES = { ctrl: 'Ctrl', control: 'Ctrl', alt: 'Alt', shift: 'Shift', super: 'Super', meta: 'Super' };
 const MODIFIER_ORDER = ['Ctrl', 'Alt', 'Shift', 'Super'];
@@ -46,10 +47,10 @@ function normalizeAccelerator(acc) {
 function validateAccelerator(acc, others = []) {
   const norm = normalizeAccelerator(acc);
   if (!norm) {
-    return { ok: false, reason: 'Ctrl, Alt, Super 중 하나 이상과 일반 키를 함께 눌러야 합니다.' };
+    return { ok: false, reason: 'error.shortcutNeedsModifier' };
   }
   if (others.map(normalizeAccelerator).includes(norm)) {
-    return { ok: false, reason: '다른 동작에 이미 사용 중인 조합입니다.' };
+    return { ok: false, reason: 'error.shortcutDuplicate' };
   }
   return { ok: true, accelerator: norm };
 }
@@ -109,6 +110,7 @@ function load(file) {
     discord: raw.discord !== false,
     autoUpdate: raw.autoUpdate === true,
     updateChannel: raw.updateChannel === 'prerelease' ? 'prerelease' : 'stable',
+    language: LANGUAGES.includes(raw.language) ? raw.language : 'auto',
   };
 }
 
@@ -119,4 +121,4 @@ function save(file, settings) {
   fs.renameSync(tmp, file);
 }
 
-module.exports = { ACTIONS, CHANNELS, DEFAULT_SHORTCUTS, validateAccelerator, load, save };
+module.exports = { ACTIONS, CHANNELS, LANGUAGES, DEFAULT_SHORTCUTS, validateAccelerator, load, save };
