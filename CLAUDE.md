@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A Windows Electron app wrapping `music.youtube.com`. It includes global shortcuts (play/pause, next, previous), the Better Lyrics extension, and Discord "Listening to" activity. User-facing text is written in Korean. This is a git repository (remote: `ddoiy13/certy-music`). Designs and plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+A Windows Electron app wrapping `music.youtube.com`. It includes global shortcuts (play/pause, next, previous), the Better Lyrics extension, and Discord "Listening to" activity. User-facing text is translated (English base, Korean) through `src/i18n.js`; never hardcode UI strings. Console logs are English only. This is a git repository (remote: `ddoiy13/certy-music`). Designs and plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 ## Commands
 
@@ -14,10 +14,12 @@ A Windows Electron app wrapping `music.youtube.com`. It includes global shortcut
 - To try a different electron-builder config without touching `package.json` or `dist/`, write the whole `build` object to a temp JSON and run `npx electron-builder --win nsis --publish never --config <file>` with `directories.output` pointing elsewhere. `--config.publish.*` flags merge into the existing `publish` array and fail schema validation.
 - Debugging: start with `YTM_DEBUG_PORT=9222 npm start` (ignored in packaged builds), then evaluate JS in the running page with `node scripts/cdp.js "<JS expression>"`. `node scripts/cdp.js --targets` prints the list of targets.
 - `scripts/cdp.js` can't see HttpOnly cookies. For cookie checks, call CDP `Network.getAllCookies` over the same WebSocket (print names/lengths only, never values). Dev runs use a separate profile, so you must log in first.
+- If `npm start` exits at once with code 0 and no error, a previous dev instance still holds the single-instance lock. Close any `electron.exe` running from this folder and restart. Editing `main.js` also needs a restart to take effect.
+- `scripts/cdp.js` runs in the page's main world, so it cannot reach `preload.js` (isolated world), and synthetic events fail the `isTrusted` checks. Verify settings-tab changes by reading the DOM (e.g. `#app-settings-panel`) after the user clicks.
 
 ## Git
 
-- Write commit messages, PR titles, and PR descriptions in English. (User-facing app text stays Korean.)
+- Write commit messages, PR titles, and PR descriptions in English.
 
 ## Structure
 
