@@ -10,3 +10,7 @@
 - [x] #6 구현 계획 작성
 - [x] #7 구현 (updater/settings/main/preload)
 - [x] #8 테스트 및 문서(CLAUDE.md) 갱신
+- [x] #9 i18n 모듈 + 로케일 파일 + 테스트
+- [x] #10 설정(language) + main/updater 연동
+- [x] #11 preload 번역 + 언어 선택 UI
+- [x] #12 테스트 및 앱 실행 검증
