@@ -7,7 +7,7 @@ An unofficial desktop app for YouTube Music that includes the "Better Lyrics" ex
 
 ## Introduction
 An unofficial Windows desktop app that wraps YouTube Music in Electron. It adds global media shortcuts (play/pause, next, previous), bundles the Better Lyrics extension for time-synced lyrics, and shows what you're listening to as a Discord activity.
-- Currently, the app’s UI is available only in Korean. Other languages are not supported yet.
+- Currently, the app’s UI is available only in Korean and English. Other languages are not supported yet.
 
 ## Download
 1. Download from the [Release](https://github.com/ddoiy13/certy-music/releases) page.
