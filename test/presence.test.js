@@ -16,8 +16,18 @@ test('재생 중인 곡은 듣는 중 활동으로 변환된다', () => {
   assert.equal(a.endTimestamp, 1_000_000 - 30_000 + 200_000);
 });
 
-test('일시정지, 곡 없음, 제목 없음이면 null', () => {
-  assert.equal(buildActivity({ ...track, playing: false }), null);
+test('일시정지면 활동을 유지하되 타임스탬프 없이 일시정지 아이콘을 붙인다', () => {
+  const a = buildActivity({ ...track, playing: false }, 1_000_000);
+  assert.equal(a.details, 'Song');
+  assert.equal(a.smallImageKey, 'paused');
+  assert.equal(a.smallImageText, 'Paused');
+  assert.equal(a.startTimestamp, undefined);
+  assert.equal(a.endTimestamp, undefined);
+  assert.equal(buildActivity(track, 1_000_000).smallImageKey, undefined);
+  assert.equal(sameActivity(buildActivity(track, 1_000_000), a), false);
+});
+
+test('곡 없음, 제목 없음이면 null', () => {
   assert.equal(buildActivity(null), null);
   assert.equal(buildActivity({ ...track, title: '' }), null);
 });
@@ -73,7 +83,7 @@ function fakeClient(log) {
   };
 }
 
-test('presence: 연결 후 활동을 한 번만 반영하고, 정지하면 비운다', async () => {
+test('presence: 연결 후 활동을 한 번만 반영하고, 일시정지하면 비우지 않고 갱신한다', async () => {
   const log = [];
   const p = createPresence({ createClient: () => fakeClient(log) });
   p.update(track);
@@ -83,7 +93,7 @@ test('presence: 연결 후 활동을 한 번만 반영하고, 정지하면 비�
   await new Promise((r) => setImmediate(r));
   p.update({ ...track, playing: false });
   await new Promise((r) => setImmediate(r));
-  assert.deepEqual(log, ['login', ['set', 'Song'], 'clear']);
+  assert.deepEqual(log, ['login', ['set', 'Song'], ['set', 'Song']]);
   p.destroy();
 });
 

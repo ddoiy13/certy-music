@@ -2,6 +2,8 @@
 const CLIENT_ID = '1559850212585898054';
 const LISTENING = 2; // Discord ActivityType.Listening
 const STATUS_DISPLAY_DETAILS = 2; // Discord StatusDisplayType.DETAILS
+// Discord 개발자 포털 앱의 Rich Presence Art Assets에 이 이름으로 올린 이미지 키
+const PAUSED_ICON = 'paused';
 const RETRY_MS = 15000;
 const SEEK_TOLERANCE_MS = 3000;
 
@@ -15,7 +17,7 @@ function clip(text, fallback = '') {
 
 // track: { title, artist, album, art, playing, position(초), duration(초) }
 function buildActivity(track, now = Date.now()) {
-  if (!track || !track.playing || !clip(track.title)) return null;
+  if (!track || !clip(track.title)) return null;
   // statusDisplayType DETAILS: 미니 프로필/멤버 목록에 앱 이름 대신 곡 제목을 표시한다.
   const activity = { type: LISTENING, statusDisplayType: STATUS_DISPLAY_DETAILS, details: clip(track.title) };
   const artist = clip(track.artist);
@@ -23,7 +25,11 @@ function buildActivity(track, now = Date.now()) {
   if (typeof track.art === 'string' && /^https:\/\//.test(track.art)) activity.largeImageKey = track.art;
   const album = clip(track.album);
   if (album) activity.largeImageText = album;
-  if (Number.isFinite(track.position) && Number.isFinite(track.duration) && track.duration > 0) {
+  if (!track.playing) {
+    // 일시정지: 진행바가 흘러가지 않도록 타임스탬프를 빼고 작은 아이콘으로 표시한다.
+    activity.smallImageKey = PAUSED_ICON;
+    activity.smallImageText = 'Paused';
+  } else if (Number.isFinite(track.position) && Number.isFinite(track.duration) && track.duration > 0) {
     const start = Math.round(now - track.position * 1000);
     activity.startTimestamp = start;
     activity.endTimestamp = start + Math.round(track.duration * 1000);
@@ -33,7 +39,7 @@ function buildActivity(track, now = Date.now()) {
 
 function sameActivity(a, b) {
   if (!a || !b) return a === b;
-  for (const k of ['details', 'state', 'largeImageKey', 'largeImageText']) if (a[k] !== b[k]) return false;
+  for (const k of ['details', 'state', 'largeImageKey', 'largeImageText', 'smallImageKey']) if (a[k] !== b[k]) return false;
   const da = Math.abs((a.startTimestamp || 0) - (b.startTimestamp || 0));
   const de = Math.abs((a.endTimestamp || 0) - (b.endTimestamp || 0));
   return da <= SEEK_TOLERANCE_MS && de <= SEEK_TOLERANCE_MS;
