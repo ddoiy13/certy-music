@@ -13,13 +13,13 @@ function extensionDir() {
 async function load(ses) {
   const dir = extensionDir();
   if (!fs.existsSync(path.join(dir, 'manifest.json'))) {
-    console.warn('Better Lyrics를 찾을 수 없음:', dir);
+    console.warn('Better Lyrics not found:', dir);
     return null;
   }
   try {
     return await (ses.extensions ?? ses).loadExtension(dir);
   } catch (err) {
-    console.error('Better Lyrics 로드 실패:', err);
+    console.error('Failed to load Better Lyrics:', err);
     return null;
   }
 }

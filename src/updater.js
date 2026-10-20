@@ -2,8 +2,9 @@
 // Electron 없이도 테스트할 수 있다. autoUpdater가 null이면(개발 실행) 아무것도 확인하지 않는다.
 const semver = require('semver');
 
-const DEV_MESSAGE = '개발 실행에서는 업데이트를 확인하지 않습니다.';
-const FALLBACK_ERROR = '업데이트 중 오류가 발생했습니다.';
+// 번역 키다. 화면에는 설정 탭이 현재 언어로 바꿔 보여 준다 (electron이 준 원문 메시지는 그대로 표시).
+const DEV_MESSAGE = 'update.devMessage';
+const FALLBACK_ERROR = 'update.fallbackError';
 const PRERELEASE_VERSION = /^\d+\.\d+\.\d+-/;
 const CLEARED = { status: 'idle', version: null, percent: 0, error: null, downgrade: false };
 

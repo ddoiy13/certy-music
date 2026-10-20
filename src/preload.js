@@ -2,7 +2,15 @@ const { ipcRenderer } = require('electron');
 
 const TAB_ID = 'app-settings-tab';
 const PANEL_ID = 'app-settings-panel';
-const LABELS = { playPause: '재생 / 일시정지', next: '다음 곡', prev: '이전 곡' };
+const LABELS = { playPause: 'shortcut.playPause', next: 'shortcut.next', prev: 'shortcut.prev' };
+const LANGUAGE_NAMES = { en: 'English', ko: '한국어' }; // 각 언어는 항상 자기 이름으로 표시한다
+
+// 샌드박스된 preload는 로컬 모듈을 require할 수 없어, 문구 사전은 main에서 IPC로 받는다.
+let strings = {};
+function t(key, params) {
+  const text = Object.hasOwn(strings, key) ? strings[key] : key;
+  return text.replace(/\{(\w+)\}/g, (m, k) => (params && k in params ? String(params[k]) : m));
+}
 
 // YouTube Music 설정 화면 DOM. 라이브 설정 페이지에서 실측한 값이다. 바뀌면 여기만 고친다.
 const SEL = {
@@ -62,7 +70,7 @@ function showResult(result, action, btn, err, fallbackText) {
     err.textContent = '';
   } else {
     btn.textContent = fallbackText;
-    err.textContent = (result && result.reason) || '요청에 실패했습니다.';
+    err.textContent = t((result && result.reason) || 'error.requestFailed');
   }
 }
 
@@ -70,7 +78,7 @@ async function invokeSafe(channel, ...args) {
   try {
     return await ipcRenderer.invoke(channel, ...args);
   } catch {
-    return { ok: false, reason: '요청에 실패했습니다.' };
+    return { ok: false, reason: 'error.requestFailed' };
   }
 }
 
@@ -79,7 +87,7 @@ function record(action, btn, err) {
   if (recording === btn) return;
   recording = btn;
   const prev = btn.textContent;
-  btn.textContent = '키를 누르세요… (Esc로 취소)';
+  btn.textContent = t('shortcut.recording');
   err.textContent = '';
   function cleanup() {
     if (recording === btn) recording = null;
@@ -110,9 +118,9 @@ function record(action, btn, err) {
 
 function shortcutRow(action, state) {
   const row = h('div', { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px' });
-  row.appendChild(h('div', { width: '140px' }, LABELS[action]));
+  row.appendChild(h('div', { width: '140px' }, t(LABELS[action])));
   const btn = h('button', BTN, state.shortcuts[action]);
-  const reset = h('button', BTN, '초기화');
+  const reset = h('button', BTN, t('shortcut.reset'));
   const err = h('div', { color: '#ff6b6b', fontSize: '12px' });
   row.append(btn, reset, err);
   btn.addEventListener('click', (e) => {
@@ -134,7 +142,7 @@ function discordRow(state) {
   box.checked = !!state.discord;
   Object.assign(box.style, { width: '16px', height: '16px', cursor: 'pointer' });
   const err = h('span', { color: '#ff6b6b', fontSize: '12px' });
-  row.append(box, h('span', {}, 'Discord 활동으로 지금 듣는 곡 표시'), err);
+  row.append(box, h('span', {}, t('discord.label')), err);
   box.addEventListener('change', async (e) => {
     if (e.isTrusted !== true) return;
     const want = box.checked;
@@ -143,7 +151,41 @@ function discordRow(state) {
       err.textContent = '';
     } else {
       box.checked = !want;
-      err.textContent = (r && r.reason) || '요청에 실패했습니다.';
+      err.textContent = t((r && r.reason) || 'error.requestFailed');
+    }
+  });
+  return row;
+}
+
+function languageRow(state) {
+  const row = h('div', { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px' });
+  row.appendChild(h('div', { width: '140px' }, t('language.label')));
+  const select = document.createElement('select');
+  Object.assign(select.style, {
+    padding: '6px 10px', background: '#212121', color: '#fff',
+    border: '1px solid rgba(255,255,255,0.3)', borderRadius: '8px', font: '14px Roboto, sans-serif',
+  });
+  for (const value of ['auto', ...Object.keys(LANGUAGE_NAMES)]) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value === 'auto' ? t('language.auto', { language: LANGUAGE_NAMES[state.autoLocale] || LANGUAGE_NAMES.en }) : LANGUAGE_NAMES[value];
+    select.appendChild(opt);
+  }
+  select.value = state.language;
+  const err = h('span', { color: '#ff6b6b', fontSize: '12px' });
+  row.append(select, err);
+  select.addEventListener('change', async (e) => {
+    if (e.isTrusted !== true) return;
+    const r = await invokeSafe('settings:setLanguage', select.value);
+    if (r && r.ok && r.strings) {
+      strings = r.strings;
+      const title = document.querySelector(`#${TAB_ID} .title`);
+      if (title) title.textContent = t('app.title');
+      const page = document.querySelector(SEL.page);
+      if (page) showPanel(page); // 패널을 새 언어로 다시 그린다
+    } else {
+      select.value = state.language;
+      err.textContent = t((r && r.reason) || 'error.requestFailed');
     }
   });
   return row;
@@ -155,26 +197,23 @@ let renderUpdate = null; // 현재 열린 패널의 상태 갱신 함수. 패널
 function updateText(u) {
   if (!u) return '';
   switch (u.status) {
-    case 'checking': return '업데이트를 확인하는 중…';
-    case 'uptodate': return '최신 버전입니다.';
-    case 'available':
-      return u.downgrade
-        ? `이전 버전 v${u.version}으로 되돌릴 수 있습니다. 자동으로 설치되지 않습니다.`
-        : `새 버전 v${u.version}을 설치할 수 있습니다.`;
-    case 'downloading': return `v${u.version} 내려받는 중… ${u.percent}%`;
-    case 'ready': return `v${u.version} 설치 준비가 끝났습니다.`;
-    case 'error': return u.error || '업데이트 중 오류가 발생했습니다.';
+    case 'checking': return t('update.checking');
+    case 'uptodate': return t('update.uptodate');
+    case 'available': return t(u.downgrade ? 'update.availableDowngrade' : 'update.available', { version: u.version });
+    case 'downloading': return t('update.downloading', { version: u.version, percent: u.percent });
+    case 'ready': return t('update.ready', { version: u.version });
+    case 'error': return t(u.error || 'update.fallbackError'); // u.error는 번역 키이거나 electron이 준 원문이다
     default: return '';
   }
 }
 
 function updateSection(state) {
   const box = h('div', { margin: '24px 0 0', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.15)' });
-  box.appendChild(h('h3', { margin: '0 0 12px', font: '500 16px Roboto, sans-serif' }, '업데이트'));
-  box.appendChild(h('div', { margin: '0 0 12px', opacity: '0.7' }, `현재 버전 v${state.version}`));
+  box.appendChild(h('h3', { margin: '0 0 12px', font: '500 16px Roboto, sans-serif' }, t('update.title')));
+  box.appendChild(h('div', { margin: '0 0 12px', opacity: '0.7' }, t('update.currentVersion', { version: state.version })));
 
   const channelRow = h('div', { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 12px' });
-  channelRow.appendChild(h('div', { width: '140px' }, '빌드 버전'));
+  channelRow.appendChild(h('div', { width: '140px' }, t('update.channel')));
   const select = document.createElement('select');
   Object.assign(select.style, {
     padding: '6px 10px', background: '#212121', color: '#fff',
@@ -198,15 +237,15 @@ function updateSection(state) {
       state.updateChannel = want;
     } else {
       select.value = state.updateChannel;
-      channelErr.textContent = (r && r.reason) || '요청에 실패했습니다.';
+      channelErr.textContent = t((r && r.reason) || 'error.requestFailed');
     }
   });
   box.appendChild(channelRow);
 
   const status = h('div', { margin: '0 0 12px', minHeight: '21px' });
   const buttons = h('div', { display: 'flex', gap: '12px', margin: '0 0 12px' });
-  const check = h('button', BTN, '업데이트 확인');
-  const install = h('button', BTN, '업데이트 설치');
+  const check = h('button', BTN, t('update.check'));
+  const install = h('button', BTN, t('update.install'));
   buttons.append(check, install);
   check.addEventListener('click', (e) => {
     if (e.isTrusted !== true) return;
@@ -225,7 +264,7 @@ function updateSection(state) {
     check.disabled = !!busy;
     check.style.opacity = busy ? '0.5' : '1';
     install.style.display = canInstall ? '' : 'none';
-    install.textContent = u && u.downgrade ? `v${u.version}으로 되돌리기` : '업데이트 설치';
+    install.textContent = u && u.downgrade ? t('update.revert', { version: u.version }) : t('update.install');
   };
   renderUpdate(state.update);
   box.append(status, buttons);
@@ -236,7 +275,7 @@ function updateSection(state) {
   autoBox.checked = !!state.autoUpdate;
   Object.assign(autoBox.style, { width: '16px', height: '16px', cursor: 'pointer' });
   const autoErr = h('span', { color: '#ff6b6b', fontSize: '12px' });
-  autoRow.append(autoBox, h('span', {}, '자동 업데이트 (앱을 종료할 때 업데이트됨.)'), autoErr);
+  autoRow.append(autoBox, h('span', {}, t('update.auto')), autoErr);
   autoBox.addEventListener('change', async (e) => {
     if (e.isTrusted !== true) return;
     const want = autoBox.checked;
@@ -245,7 +284,7 @@ function updateSection(state) {
       autoErr.textContent = '';
     } else {
       autoBox.checked = !want;
-      autoErr.textContent = (r && r.reason) || '요청에 실패했습니다.';
+      autoErr.textContent = t((r && r.reason) || 'error.requestFailed');
     }
   });
   box.appendChild(autoRow);
@@ -262,16 +301,17 @@ async function renderPanel() {
   if (!state) return null;
   const panel = h('div', { padding: '24px 32px', color: '#fff', font: '14px/1.5 Roboto, sans-serif', maxWidth: '640px', flex: '1 1 auto', minWidth: '0' });
   panel.id = PANEL_ID;
-  panel.appendChild(h('h2', { margin: '0 0 8px', font: '500 20px Roboto, sans-serif' }, '앱 설정'));
+  panel.appendChild(h('h2', { margin: '0 0 8px', font: '500 20px Roboto, sans-serif' }, t('app.title')));
   // panel.appendChild(
   //   h('p', { margin: '0 0 24px', opacity: '0.7' },
   //     `미디어 키(${Object.values(state.mediaKeys).join(', ')})는 항상 함께 동작합니다.`),
   // );
+  panel.appendChild(languageRow(state));
   for (const action of Object.keys(LABELS)) panel.appendChild(shortcutRow(action, state));
   panel.appendChild(discordRow(state));
   panel.appendChild(updateSection(state));
   if (state.betterLyrics) {
-    const open = h('button', { ...BTN, marginTop: '16px' }, 'Better Lyrics 설정 열기');
+    const open = h('button', { ...BTN, marginTop: '16px' }, t('bl.open'));
     open.addEventListener('click', (e) => {
       if (e.isTrusted !== true) return;
       ipcRenderer.invoke('bl:openOptions').catch(() => {});
@@ -352,7 +392,7 @@ function ensureTab() {
   const cloneTitle = tab.querySelector(SEL.tabLabel);
   const title = document.createElement('span');
   title.className = 'title';
-  title.textContent = '앱 설정';
+  title.textContent = t('app.title');
   if (sampleTitle) {
     const cs = getComputedStyle(sampleTitle);
     Object.assign(title.style, { font: cs.font, color: cs.color, flex: '1 1 auto' });
@@ -415,7 +455,14 @@ ipcRenderer.on('update:state', (_event, u) => {
   if (renderUpdate && document.getElementById(PANEL_ID)) renderUpdate(u);
 });
 
+// 탭 제목을 만들기 전에 문구 사전을 받아 둔다. 실패하면 키가 그대로 보이므로 그대로 진행하지 않고 재시도하지도 않는다.
+const stringsReady = ipcRenderer.invoke('i18n:get')
+  .then((s) => { if (s && s.strings) strings = s.strings; })
+  .catch(() => {});
+
 window.addEventListener('DOMContentLoaded', () => {
-  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
-  schedule();
+  stringsReady.then(() => {
+    new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+    schedule();
+  });
 });

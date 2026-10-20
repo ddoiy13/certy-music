@@ -6,6 +6,7 @@ const player = require('./player');
 const betterLyrics = require('./extension');
 const { createPresence } = require('./presence');
 const { createUpdater, shouldNotify } = require('./updater');
+const i18n = require('./i18n');
 
 const START_URL = 'https://music.youtube.com/';
 const LOGIN_URL = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=youtube&continue=' + encodeURIComponent('https://www.youtube.com/signin?action_handle_signin=true&next=' + encodeURIComponent('https://music.youtube.com/'));
@@ -37,6 +38,29 @@ const UPDATE_FIRST_CHECK_MS = 10 * 1000;
 const UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
+
+// 설정이 auto면 OS 언어를 따른다. 감지에 실패하면 영어다.
+function currentLocale() {
+  return i18n.resolveLocale(settings.language, systemLocale());
+}
+
+// 설정을 'auto'로 두면 적용될 언어. 설정 탭의 "자동 (한국어)" 표시에 쓴다.
+function autoLocale() {
+  return i18n.resolveLocale('auto', systemLocale());
+}
+
+function systemLocale() {
+  try {
+    return app.getLocale();
+  } catch {
+    return '';
+  }
+}
+
+function i18nState() {
+  const locale = currentLocale();
+  return { language: settings.language, locale, strings: i18n.strings(locale) };
+}
 
 function isAllowedUrl(url) {
   try {
@@ -109,7 +133,7 @@ function createWindow() {
       settings.window = { width: n.width, height: n.height, x: n.x, y: n.y, maximized: win.isMaximized() };
       settingsStore.save(settingsFile(), settings);
     } catch (err) {
-      console.error('창 상태를 저장하지 못했습니다:', err);
+      console.error('Failed to save window state:', err);
     }
   });
   // window.open / will-navigate guards are installed globally in 'web-contents-created'.
@@ -155,9 +179,9 @@ function startUpdater() {
       if (shouldNotify(state, notifiedVersion)) {
         notifiedVersion = state.version;
         try {
-          new Notification({ title: 'Certy Music', body: `새 버전이 있습니다. 앱 설정에서 업데이트할 수 있습니다. (v${state.version})` }).show();
+          new Notification({ title: 'Certy Music', body: i18n.createTranslator(currentLocale())('update.notify', { version: state.version }) }).show();
         } catch (err) {
-          console.error('업데이트 알림을 띄우지 못했습니다:', err);
+          console.error('Failed to show the update notification:', err);
         }
       }
     },
@@ -187,22 +211,22 @@ function trusted(event) {
 }
 
 function applyShortcut(action, accelerator) {
-  if (!settingsStore.ACTIONS.includes(action)) return { ok: false, reason: '잘못된 요청입니다.' };
+  if (!settingsStore.ACTIONS.includes(action)) return { ok: false, reason: 'error.invalidRequest' };
   const others = settingsStore.ACTIONS.filter((a) => a !== action).map((a) => settings.shortcuts[a]);
   const v = settingsStore.validateAccelerator(accelerator, others);
   if (!v.ok) return v;
   if (!shortcuts.change(action, v.accelerator)) {
-    return { ok: false, reason: '이 조합은 다른 프로그램이 사용 중이거나 등록할 수 없습니다.' };
+    return { ok: false, reason: 'error.shortcutUnavailable' };
   }
   const previous = settings.shortcuts[action];
   settings.shortcuts[action] = v.accelerator;
   try {
     settingsStore.save(settingsFile(), settings);
   } catch (err) {
-    console.error('단축키 설정을 저장하지 못했습니다:', err);
+    console.error('Failed to save the shortcut setting:', err);
     try { shortcuts.change(action, previous); } catch (e2) { console.error(e2); }
     settings.shortcuts[action] = previous;
-    return { ok: false, reason: '설정을 저장하지 못했습니다.' };
+    return { ok: false, reason: 'error.saveFailed' };
   }
   return { ok: true, shortcuts: { ...settings.shortcuts } };
 }
@@ -217,49 +241,65 @@ ipcMain.handle('settings:get', (event) => {
     version: app.getVersion(),
     autoUpdate: settings.autoUpdate,
     updateChannel: settings.updateChannel,
+    language: settings.language,
+    autoLocale: autoLocale(),
     update: updater ? updater.getState() : null,
   };
 });
+ipcMain.handle('i18n:get', (event) => (trusted(event) ? i18nState() : null));
+ipcMain.handle('settings:setLanguage', (event, language) => {
+  if (!trusted(event) || !settingsStore.LANGUAGES.includes(language)) return { ok: false, reason: 'error.notAllowed' };
+  const previous = settings.language;
+  settings.language = language;
+  try {
+    settingsStore.save(settingsFile(), settings);
+  } catch (err) {
+    console.error('Failed to save the language setting:', err);
+    settings.language = previous;
+    return { ok: false, reason: 'error.saveFailed' };
+  }
+  return { ok: true, ...i18nState() };
+});
 ipcMain.handle('settings:setDiscord', (event, on) => {
-  if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: '허용되지 않은 요청입니다.' };
+  if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: 'error.notAllowed' };
   const previous = settings.discord;
   settings.discord = on;
   try {
     settingsStore.save(settingsFile(), settings);
   } catch (err) {
-    console.error('Discord 설정을 저장하지 못했습니다:', err);
+    console.error('Failed to save the Discord setting:', err);
     settings.discord = previous;
-    return { ok: false, reason: '설정을 저장하지 못했습니다.' };
+    return { ok: false, reason: 'error.saveFailed' };
   }
   if (presence) presence.setEnabled(on);
   return { ok: true, discord: on };
 });
 ipcMain.handle('settings:setAutoUpdate', (event, on) => {
-  if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: '허용되지 않은 요청입니다.' };
+  if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: 'error.notAllowed' };
   const previous = settings.autoUpdate;
   settings.autoUpdate = on;
   try {
     settingsStore.save(settingsFile(), settings);
   } catch (err) {
-    console.error('자동 업데이트 설정을 저장하지 못했습니다:', err);
+    console.error('Failed to save the auto-update setting:', err);
     settings.autoUpdate = previous;
-    return { ok: false, reason: '설정을 저장하지 못했습니다.' };
+    return { ok: false, reason: 'error.saveFailed' };
   }
   if (updater) updater.setAutoUpdate(on);
   return { ok: true, autoUpdate: on };
 });
 ipcMain.handle('settings:setUpdateChannel', (event, channel) => {
   if (!trusted(event) || !settingsStore.CHANNELS.includes(channel)) {
-    return { ok: false, reason: '허용되지 않은 요청입니다.' };
+    return { ok: false, reason: 'error.notAllowed' };
   }
   const previous = settings.updateChannel;
   settings.updateChannel = channel;
   try {
     settingsStore.save(settingsFile(), settings);
   } catch (err) {
-    console.error('빌드 버전 설정을 저장하지 못했습니다:', err);
+    console.error('Failed to save the update channel setting:', err);
     settings.updateChannel = previous;
-    return { ok: false, reason: '설정을 저장하지 못했습니다.' };
+    return { ok: false, reason: 'error.saveFailed' };
   }
   if (updater) {
     updater.setChannel(channel);
@@ -278,10 +318,10 @@ ipcMain.handle('update:install', (event) => {
   return { ok: true };
 });
 ipcMain.handle('settings:setShortcut', (event, action, accelerator) =>
-  trusted(event) ? applyShortcut(action, accelerator) : { ok: false, reason: '허용되지 않은 요청입니다.' },
+  trusted(event) ? applyShortcut(action, accelerator) : { ok: false, reason: 'error.notAllowed' },
 );
 ipcMain.handle('settings:resetShortcut', (event, action) =>
-  trusted(event) ? applyShortcut(action, settingsStore.DEFAULT_SHORTCUTS[action]) : { ok: false, reason: '허용되지 않은 요청입니다.' },
+  trusted(event) ? applyShortcut(action, settingsStore.DEFAULT_SHORTCUTS[action]) : { ok: false, reason: 'error.notAllowed' },
 );
 ipcMain.handle('bl:openOptions', (event) => {
   if (!trusted(event) || !blExt) return { ok: false };
@@ -305,7 +345,7 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     shortcuts = createShortcutManager(globalShortcut, handlers);
     const failed = shortcuts.applyAll(settings.shortcuts);
-    if (failed.length) console.warn('등록 실패한 단축키:', failed.join(', '));
+    if (failed.length) console.warn('Failed to register shortcuts:', failed.join(', '));
     startPresence();
     startUpdater();
   });
