@@ -1,9 +1,11 @@
 <!DOCTYPE html><html lang="en-US"><head>
 <script src="/electron-shim.js"></script>
     <meta charset="utf-8">
-    <meta name="color-scheme" content="dark light">
+    <meta name="color-scheme" content="dark">
     <title>__MSG_auth_pageTitle__</title>
     <link rel="stylesheet" href="/fonts/fonts.css">
+    
+    
     
     <style>body:not(.i18n-ready){opacity:0}</style>
   <link rel="stylesheet" href="/pages/auth.css"></head>
@@ -29,23 +31,23 @@
 
       <section class="auth-card__remember">
         <label class="auth-remember">
-          <span class="auth-remember__toggle">
-            <input type="checkbox" id="auth-remember">
-            <span class="auth-remember__checkmark"></span>
+          <span class="ui-switch ui-switch--compact">
+            <input type="checkbox" role="switch" class="ui-switch__input" id="auth-remember">
+            <span class="ui-switch__track" aria-hidden="true"></span>
           </span>
           <span id="auth-remember-label"></span>
         </label>
       </section>
 
-      <p class="auth-card__error" id="auth-error" role="status"></p>
+      <div class="auth-card__error" id="auth-error" role="alert"></div>
     </main>
 
     <footer class="auth-page__footer">
-      <button type="button" id="auth-cancel" class="auth-button auth-button--secondary"></button>
-      <button type="button" id="auth-approve" class="auth-button auth-button--primary"></button>
+      <button type="button" id="auth-cancel" class="ui-button"></button>
+      <button type="button" id="auth-approve" class="ui-button ui-button--accent"></button>
     </footer>
 
-    <script src="/pages/auth.js" type="module" defer=""></script>
+    <script src="/shared/commons.js" type="module" defer=""></script><script src="/pages/auth.js" type="module" defer=""></script>
   
 
 </body></html>

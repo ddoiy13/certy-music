@@ -1,4 +1,9 @@
 :root {
+  /* Optional image paint; themes own the asset and any HDR brightness policy. */
+  --blyrics-highlight-image: none;
+  --blyrics-image-glow-opacity-from: 0.5;
+  --blyrics-image-glow-opacity-to: 0;
+
 	/* Colors */
 	--blyrics-ui-text-color: var(
 		--blyrics-text-color,
@@ -49,6 +54,11 @@
 	--blyrics-translated-color: color(
 		display-p3 1 1 1 / var(--blyrics-translated-opacity, 0.6)
 	);
+
+	--blyrics-credits-label: "Written by";
+	--blyrics-credits-font-size: max(0.4em, 12px);
+	--blyrics-credits-opacity: 0.2;
+	--blyrics-credits-focused-opacity: 0.85;
 
 	--blyrics-footer-font-family: Satoshi, Roboto, Noto Naskh Arabic UI, Arial, sans-serif;
 	--blyrics-footer-font-size: 14px;
