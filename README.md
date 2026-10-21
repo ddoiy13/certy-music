@@ -16,8 +16,11 @@ An unofficial Windows desktop app that wraps YouTube Music in Electron. It adds 
 ## Security Warning
 Login cookies are not protected strongly enough. If someone gets access to your PC, your user profile, or the app's data folder, your login session may be stolen and used to access your Google account. For this and other reasons, problems such as account restrictions or suspension may occur. Use this app at your own risk.
 
+## Disclaimer
+This is an independent, non-commercial, unofficial project. Warranty and liability are covered by sections 15 and 16 of the [GPL-3.0](LICENSE) license. In addition, the author is not responsible for account restrictions or suspension caused by using this app. Use of YouTube Music through this app remains subject to [YouTube's Terms of Service](https://www.youtube.com/t/terms), which you are responsible for following.
+
 ## Changes to Better Lyrics
-The bundled extension in `extensions/better-lyrics/` is the official Better Lyrics 2.4.1 Chrome build. Electron implements only part of the Chrome extension API, so the following changes were made. Nothing else was modified.
+The bundled extension in `extensions/better-lyrics/` is the official Better Lyrics 3.0.0 Chrome build. Electron implements only part of the Chrome extension API, so the following changes were made. Nothing else was modified.
 
 - **Added `electron-shim.js`**: fills in the `chrome.*` APIs that Electron is missing or breaks.
   - `chrome.windows.onRemoved`: added as a no-op event.
