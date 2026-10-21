@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.4.1",
+  "version": "3.0.0",
   "default_locale": "en",
   "name": "Better Lyrics (Lyrics for YouTube Music)",
   "description": "__MSG_extensionDescription__",
@@ -21,7 +21,8 @@
     "matches": [
       "https://unison.betterlyrics.org/*",
       "https://unison.boidu.dev/*",
-      "https://blrcunison.vercel.app/*"
+      "https://blrcunison.vercel.app/*",
+      "https://unison.prjktla.my.id/*"
     ]
   },
   "optional_permissions": [
@@ -29,7 +30,7 @@
   ],
   "optional_host_permissions": [],
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com; font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com; img-src 'self' data: https://blrcunison.vercel.app https://boidu.dev https://betterlyrics.org https://raw.githubusercontent.com https://placehold.co; connect-src https://unison.betterlyrics.org https://unison.boidu.dev https://raw.githubusercontent.com https://api.github.com https://themes.betterlyrics.org; frame-src https://themes.betterlyrics.org;"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com; font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com; img-src 'self' data: https://blrcunison.vercel.app https://boidu.dev https://betterlyrics.org https://raw.githubusercontent.com https://placehold.co https://cdn.betterlyrics.org https://cdn.discordapp.com https://*.googleusercontent.com https://i.ytimg.com; connect-src https://unison.betterlyrics.org https://unison.boidu.dev https://raw.githubusercontent.com https://api.github.com https://themes.betterlyrics.org; frame-src https://themes.betterlyrics.org;"
   },
   "options_ui": {
     "page": "options/index.html",
@@ -61,7 +62,8 @@
       "matches": [
         "https://blrcunison.vercel.app/*",
         "https://unison.betterlyrics.org/*",
-        "https://unison.boidu.dev/*"
+        "https://unison.boidu.dev/*",
+        "https://unison.prjktla.my.id/*"
       ],
       "resources": [
         "pages/auth.html"
@@ -91,8 +93,29 @@
       "matches": [
         "*://music.youtube.com/*"
       ],
+      "run_at": "document_start",
+      "js": [
+        "content_scripts/content-5.js"
+      ],
+      "css": []
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
       "js": [
         "content_scripts/content-0.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "css": []
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "js": [
+        "content_scripts/content-1.js"
       ],
       "run_at": "document_start",
       "world": "ISOLATED",
@@ -104,7 +127,7 @@
       ],
       "run_at": "document_start",
       "js": [
-        "content_scripts/content-4.js"
+        "content_scripts/content-6.js"
       ],
       "css": []
     },
@@ -113,7 +136,7 @@
         "*://music.youtube.com/*"
       ],
       "js": [
-        "content_scripts/content-1.js"
+        "content_scripts/content-2.js"
       ],
       "run_at": "document_start",
       "world": "MAIN",
@@ -125,28 +148,7 @@
       ],
       "run_at": "document_end",
       "js": [
-        "content_scripts/content-5.js"
-      ],
-      "css": []
-    },
-    {
-      "matches": [
-        "*://music.youtube.com/*"
-      ],
-      "js": [
-        "content_scripts/content-2.js"
-      ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "css": []
-    },
-    {
-      "matches": [
-        "*://music.youtube.com/*"
-      ],
-      "run_at": "document_end",
-      "js": [
-        "content_scripts/content-6.js"
+        "content_scripts/content-7.js"
       ],
       "css": []
     },
@@ -160,12 +162,33 @@
       "run_at": "document_end",
       "world": "MAIN",
       "css": []
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "run_at": "document_end",
+      "js": [
+        "content_scripts/content-8.js"
+      ],
+      "css": []
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "js": [
+        "content_scripts/content-4.js"
+      ],
+      "run_at": "document_end",
+      "world": "MAIN",
+      "css": []
     }
   ],
   "action": {
     "default_popup": "action/index.html"
   },
-  "version_name": "2.4.1",
+  "version_name": "3.0.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4RTGjLjI1KqxGLgE7d3tD4O+mTA6pKDPZ29V4/uP9nBicHRst7R7n5wdFW1qvLiILyUqRm1fURMBeShb0mcPEMC6iW3cr4i8NG+52VxFcPIYbsegPHJsQFVWe6lgorVw20yn2mWshGKIppgN14FJCSFc7mS/CX4JL88E82AIaFJiVBgmpBu5RMcglUfSwMH5ePlRV68dOhMjX8bdoHH6FoAARh7igtyKBKEzA811PWRIBiKZBGAZc2ew6+5O2mERuFq0PRvfEcD4KsBRiWHltyUcYzVjIMF4soC8i6lNOJx8it0kAn5PN6G7TdiD3HbU5eLqk+iCr+cK/pS1ybiACQIDAQAB",
   "background": {
     "service_worker": "background/service_worker.js",

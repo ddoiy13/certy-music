@@ -39,6 +39,14 @@
     }
   } catch (e) { console.warn('[electron-shim] windows stub failed', e); }
 
+  // d. chrome.extension.getViews (2.5+ options page calls it on load; throwing there stops tab wiring)
+  try {
+    if (!chrome.extension) define(chrome, 'extension', {});
+    if (chrome.extension && typeof chrome.extension.getViews !== 'function') {
+      define(chrome.extension, 'getViews', function () { return []; });
+    }
+  } catch (e) { console.warn('[electron-shim] extension.getViews stub failed', e); }
+
   // b/c. chrome.storage.sync backed by local
   try {
     var storage = chrome.storage;

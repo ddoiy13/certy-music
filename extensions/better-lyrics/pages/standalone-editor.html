@@ -1,13 +1,16 @@
-<html lang="en-US" style="width: unset; max-width: unset"><head>
+<!DOCTYPE html><html lang="en-US"><head>
 <script src="/electron-shim.js"></script>
 		<meta name="color-scheme" content="dark">
 		<title>__MSG_editor_pageTitle__</title>
 		<link rel="stylesheet" href="/fonts/fonts.css">
 		
+		
+		
+		
 		<style>body:not(.i18n-ready){opacity:0}</style>
 	<link rel="stylesheet" href="/pages/standalone-editor.css"></head>
-	<body style="height: 100%; width: auto; margin: 0; padding: 0">
-		<div style="height: 100%; width: auto; display: flex; flex-direction: column">
+	<body class="standalone-editor">
+		<div class="standalone-editor__shell">
 			<div id="theme-name-display" class="theme-name-display standalone">
 				<div class="theme-name-container">
 					<div class="theme-name-wrapper">
@@ -20,16 +23,16 @@
 							</defs>
 							<path fill="url(#gradient)" fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd"></path>
 						</svg>
-						<span id="theme-name-text" class="theme-name-text" title="__MSG_options_editor_doubleClickRename__"></span>
+						<span id="theme-name-text" class="theme-name-text" data-tooltip="__MSG_options_editor_doubleClickRename__"></span>
 					</div>
 					<div class="theme-btn-container">
-						<button id="edit-theme-btn" class="edit-theme-btn" title="__MSG_options_editor_renameTheme__">
+						<button id="edit-theme-btn" type="button" class="ui-button ui-button--compact ui-button--icon edit-theme-btn" data-tooltip="__MSG_options_editor_renameTheme__" aria-label="__MSG_options_editor_renameTheme__">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 								<path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z"></path>
 								<path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z"></path>
 							</svg>
 						</button>
-						<button id="delete-theme-btn" class="delete-theme-btn" title="__MSG_options_editor_deleteTheme__">
+						<button id="delete-theme-btn" type="button" class="ui-button ui-button--compact ui-button--icon ui-button--danger-tint delete-theme-btn" data-tooltip="__MSG_options_editor_deleteTheme__" aria-label="__MSG_options_editor_deleteTheme__">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 								<path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6q-.425 0-.712-.288T4 5t.288-.712T5 4h4q0-.425.288-.712T10 3h4q.425 0 .713.288T15 4h4q.425 0 .713.288T20 5t-.288.713T19 6v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zm-7 11q.425 0 .713-.288T11 16V9q0-.425-.288-.712T10 8t-.712.288T9 9v7q0 .425.288.713T10 17m4 0q.425 0 .713-.288T15 16V9q0-.425-.288-.712T14 8t-.712.288T13 9v7q0 .425.288.713T14 17M7 6v13z"></path>
 							</svg>
@@ -37,30 +40,29 @@
 					</div>
 				</div>
 			</div>
-			<div id="editor-container" style="flex-grow: 2; width: 100%">
-				<div id="editor" style="height: 100%; min-height: 100%; width: 100%; overflow: auto"></div>
-				<div id="sync-indicator">__MSG_options_editor_saving__</div>
+			<div id="editor-container">
+				<div id="editor"></div>
 			</div>
-			<div class="ie-utils" style="margin-left: 1em; margin-top: 1em;">
-				<button id="file-import-btn" class="small-btn">
+			<div class="ie-utils">
+				<button id="file-import-btn" class="ui-button">
 					<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
 						<path fill="currentColor" d="M11 16V7.85l-2.6 2.6L7 9l5-5l5 5l-1.4 1.45l-2.6-2.6V16zm-5 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z"></path>
 					</svg>
 					__MSG_editor_importFromFile__
 				</button>
-				<button id="file-export-btn" class="small-btn">
+				<button id="file-export-btn" class="ui-button">
 					<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
 						<path fill="currentColor" d="M12 15.575q-.2 0-.375-.062T11.3 15.3l-3.6-3.6q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L11 12.15V5q0-.425.288-.712T12 4t.713.288T13 5v7.15l1.875-1.875q.3-.3.713-.288t.712.313q.275.3.288.7t-.288.7l-3.6 3.6q-.15.15-.325.213t-.375.062M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20z"></path>
 					</svg>
 					__MSG_editor_exportToFile__
 				</button>
-				<button id="save-theme-btn" class="small-btn">
+				<button id="save-theme-btn" class="ui-button">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"></path>
 					</svg>
 					__MSG_editor_saveAsTheme__
 				</button>
-				<button id="styling-guide-btn" class="small-btn">
+				<button id="styling-guide-btn" class="ui-button">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<path fill="currentColor" d="M7.25 7A.75.75 0 0 1 8 6.25h8a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 7M8 9.75a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5z"></path>
 						<path fill="currentColor" fill-rule="evenodd" d="M9.945 1.25c-1.367 0-2.47 0-3.337.117c-.9.12-1.658.38-2.26.981c-.602.602-.86 1.36-.981 2.26c-.117.867-.117 1.97-.117 3.337v8.11c0 1.367 0 2.47.117 3.337c.12.9.38 1.658.981 2.26c.602.602 1.36.86 2.26.982c.867.116 1.97.116 3.337.116h4.11c1.367 0 2.47 0 3.337-.116c.9-.122 1.658-.38 2.26-.982s.86-1.36.982-2.26c.116-.867.116-1.97.116-3.337v-8.11c0-1.367 0-2.47-.116-3.337c-.122-.9-.38-1.658-.982-2.26s-1.36-.86-2.26-.981c-.867-.117-1.97-.117-3.337-.117zM5.41 3.409c.277-.277.665-.457 1.4-.556c.754-.101 1.756-.103 3.191-.103h4c1.435 0 2.436.002 3.192.103c.734.099 1.122.28 1.399.556c.277.277.457.665.556 1.4c.101.754.103 1.756.103 3.191v7.25H7.782c-.818 0-1.376 0-1.855.128a3.8 3.8 0 0 0-1.177.548V8c0-1.435.002-2.437.103-3.192c.099-.734.28-1.122.556-1.399m-.632 14.84c.015.354.039.665.076.943c.099.734.28 1.122.556 1.399c.277.277.665.457 1.4.556c.754.101 1.756.103 3.191.103h4c1.435 0 2.436-.002 3.192-.103c.734-.099 1.122-.28 1.399-.556c.277-.277.457-.665.556-1.4c.083-.615.099-1.395.102-2.441H7.898c-.978 0-1.32.006-1.583.077a2.25 2.25 0 0 0-1.538 1.422" clip-rule="evenodd"></path>
@@ -68,7 +70,7 @@
 					__MSG_editor_stylingGuide__
 				</button>
 			</div>
-			<p class="note" style="margin-left: 1em; margin-bottom: 0.5em">
+			<p class="note">
 				<span>
 					__MSG_editor_tip__ <a href="https://github.com/better-lyrics/better-lyrics/blob/master/STYLING.md" target="_blank">__MSG_editor_stylingGuide__</a>.
 				</span>
@@ -91,34 +93,33 @@
 				<a href="https://github.com/better-lyrics/rics" target="_blank">__MSG_editor_docs__</a>
 				</div>
 			</div>
-			<div id="status-css"></div>
 		</div>
 
-		<div id="modal-overlay" class="modal-overlay">
-			<div id="modal" class="modal">
-				<div class="modal-header">
-					<h3 id="modal-title" class="modal-title"></h3>
-					<button id="modal-close" class="modal-close-btn" aria-label="Close">
+		<div id="modal-overlay" class="ui-modal" hidden="">
+			<div class="ui-modal__surface">
+				<div class="ui-modal__head">
+					<h3 id="modal-title" class="ui-modal__title"></h3>
+					<button id="modal-close" type="button" class="ui-button ui-button--header ui-button--icon ui-modal__close" data-modal-close="" aria-label="__MSG_ui_close__">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 							<path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"></path>
 						</svg>
 					</button>
 				</div>
-				<div class="modal-body">
-					<p id="modal-message" class="modal-message"></p>
-					<input type="text" id="modal-input" class="modal-input" placeholder="Enter new name" style="display: none">
+				<div class="ui-modal__body" data-scroll-fade="">
+					<p id="modal-message" class="ui-modal__message"></p>
+					<input type="text" id="modal-input" class="ui-field" hidden="">
 				</div>
-				<div class="modal-footer">
-					<button id="modal-cancel" class="modal-btn modal-btn-secondary">
+				<div class="ui-modal__foot">
+					<button id="modal-cancel" type="button" data-modal-close="" class="ui-button ui-button--header">
 						__MSG_options_modal_cancel__
 					</button>
-					<button id="modal-confirm" class="modal-btn modal-btn-primary">
+					<button id="modal-confirm" type="button" class="ui-button ui-button--header ui-button--primary">
 						__MSG_options_modal_confirm__
 					</button>
 				</div>
 			</div>
 		</div>
 	
-	<script src="/pages/standalone-editor.js" type="module" defer=""></script>
+	<script src="/shared/commons.js" type="module" defer=""></script><script src="/pages/standalone-editor.js" type="module" defer=""></script>
 
 </body></html>
