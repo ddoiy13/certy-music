@@ -22,6 +22,9 @@ An unofficial Windows desktop app that wraps YouTube Music in Electron. It adds 
 
 Use this app at your own risk.
 
+## Privacy
+The app itself has no analytics or telemetry. Some features send limited information to third parties (Discord, GitHub, and the lyrics services used by Better Lyrics). See the [Privacy Policy](PRIVACY.md) for details.
+
 ## Disclaimer
 This is an independent, non-commercial, unofficial project. Warranty and liability are covered by sections 15 and 16 of the [GPL-3.0](LICENSE) license. In addition, the author is not responsible for account restrictions or suspension caused by using this app. Use of YouTube Music through this app remains subject to [YouTube's Terms of Service](https://www.youtube.com/t/terms), which you are responsible for following.
 
