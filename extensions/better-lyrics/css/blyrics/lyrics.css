@@ -1,4 +1,4 @@
-@import url("image-highlights.css?v=3.0.0");
+@import url("image-highlights.css?v=3.0.1");
 
 /* Resolve the default stack at each language boundary. A root-level var() would freeze
    the host's language-specific fallback before the lyric/translation language is known.
@@ -177,11 +177,22 @@
 	unicode-bidi: isolate;
 }
 
+/* WebRender snaps 2D-translated glyphs to whole pixels; perspective rasterizes them in local space. */
+.blyrics-container[data-browser-engine="gecko"] .blyrics--animating .blyrics-word--lettered {
+	perspective: 100000px;
+}
+
 .blyrics-word-highlight.blyrics-word-highlight--lettered {
 	background-image: none;
 }
 
+/* A mask clips to the border box, cutting off glyph overhang (a j's hook, italics). The padding
+   widens that clip without moving layout, and the content-box origin keeps the sweep geometry. */
 .blyrics-word-highlight .blyrics--letter {
+	padding-inline: 0.25em;
+	margin-inline: -0.25em;
+	-webkit-mask-origin: content-box;
+	mask-origin: content-box;
 	color: var(--blyrics-lyric-active-color);
 	-webkit-mask-image: linear-gradient(90deg, #000 0, #000 50%, #0000 calc(50% + var(--mask-fade, 3%)));
 	mask-image: linear-gradient(90deg, #000 0, #000 50%, #0000 calc(50% + var(--mask-fade, 3%)));
@@ -200,9 +211,15 @@
 	mask-position: 100% 0%;
 }
 
+/* text-decoration skips inline-block letters and rides the wave, so draw on the word box instead, from its
+   center (fixed against the text at any line-height), with layout-neutral padding so a tight box can hold it. */
 [blyrics-alt-hover] .blyrics--word:hover {
-	text-decoration: underline;
-	text-underline-offset: 0.15em;
+	padding-block: 0.25em;
+	margin-block: -0.25em;
+	background-image: linear-gradient(currentColor, currentColor);
+	background-position: 0 calc(50% + 0.54em);
+	background-repeat: no-repeat;
+	background-size: 100% 0.06em;
 }
 
 .blyrics--line > .blyrics-line-main > .blyrics-background-lyric,

@@ -21,6 +21,3 @@ desktop.ini
 
 # Claude Code Local Settings
 .claude/settings.local.json
-
-# Other
-*.png
