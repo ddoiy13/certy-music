@@ -29,7 +29,7 @@ The app itself has no analytics or telemetry. Some features send limited informa
 This is an independent, non-commercial, unofficial project. Warranty and liability are covered by sections 15 and 16 of the [GPL-3.0](LICENSE) license. In addition, the author is not responsible for account restrictions or suspension caused by using this app. Use of YouTube Music through this app remains subject to [YouTube's Terms of Service](https://www.youtube.com/t/terms), which you are responsible for following.
 
 ## Changes to Better Lyrics
-The bundled extension in `extensions/better-lyrics/` is the official Better Lyrics 3.0.0 Chrome build. Electron implements only part of the Chrome extension API, so the following changes were made. Nothing else was modified.
+The bundled extension in `extensions/better-lyrics/` is the official Better Lyrics 3.0.1 Chrome build. Electron implements only part of the Chrome extension API, so the following changes were made. Nothing else was modified.
 
 - **Added `electron-shim.js`**: fills in the `chrome.*` APIs that Electron is missing or breaks.
   - `chrome.windows.onRemoved`: added as a no-op event.
