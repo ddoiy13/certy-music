@@ -17,19 +17,22 @@ function fakeGS(blocked = []) {
 const handlers = { playPause: () => {}, next: () => {}, prev: () => {} };
 const defaults = { playPause: 'Ctrl+Alt+Space', next: 'Ctrl+Alt+Right', prev: 'Ctrl+Alt+Left' };
 
-test('applyAll은 미디어 키 3개와 사용자 조합 3개를 등록한다', () => {
+test('applyAll은 사용자 조합 3개만 등록하고 미디어 키는 등록하지 않는다 (등록하면 SMTC가 꺼짐)', () => {
   const gs = fakeGS();
+  const attempted = [];
+  const register = gs.register;
+  gs.register = (acc, fn) => { attempted.push(acc); return register(acc, fn); };
   const failed = createShortcutManager(gs, handlers).applyAll(defaults);
   assert.deepEqual(failed, []);
-  assert.equal(gs.reg.size, 6);
-  for (const k of Object.values(MEDIA_KEYS)) assert.ok(gs.reg.has(k));
+  assert.equal(gs.reg.size, 3);
+  for (const k of Object.values(MEDIA_KEYS)) assert.ok(!attempted.includes(k));
 });
 
 test('applyAll은 등록 실패한 조합을 돌려주고 나머지는 등록한다', () => {
   const gs = fakeGS(['Ctrl+Alt+Right']);
   const failed = createShortcutManager(gs, handlers).applyAll(defaults);
   assert.deepEqual(failed, ['Ctrl+Alt+Right']);
-  assert.equal(gs.reg.size, 5);
+  assert.equal(gs.reg.size, 2);
 });
 
 test('change 성공 시 이전 조합은 해제되고 새 조합이 등록된다', () => {

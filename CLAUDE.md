@@ -18,6 +18,8 @@ A Windows Electron app wrapping `music.youtube.com`. It includes global shortcut
 - If `npm start` exits at once with code 0 and no error, a previous dev instance still holds the single-instance lock. Close any `electron.exe` running from this folder and restart. Editing `main.js` also needs a restart to take effect.
 - `scripts/cdp.js` runs in the page's main world, so it cannot reach `preload.js` (isolated world), and synthetic events fail the `isTrusted` checks. Verify settings-tab changes by reading the DOM (e.g. `#app-settings-panel`) after the user clicks.
 - This PC's Git Bash has `gh` but no `jq`. To test a workflow's shell step locally, extract the `run:` block and put a small node stand-in for `jq` in a function (`jq() { node shim.js "$@"; }`); a script file on `PATH` was not found by Git Bash here.
+- SMTC check without eyeballing the flyout: in PowerShell, `RequestAsync()` on `Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager` (await via `WindowsRuntimeSystemExtensions.AsTask`), then print each session's `SourceAppUserModelId`, title, and `GetPlaybackInfo()` (status, `Controls.IsShuffleEnabled`, etc.). Other apps (browsers) show up too.
+- No media keys on this PC: simulate them with `user32 keybd_event` (`0xB3` play/pause, `0xB0` next, `0xB1` previous; key-down then key-up with flag 2).
 
 ## Git
 
@@ -27,7 +29,7 @@ A Windows Electron app wrapping `music.youtube.com`. It includes global shortcut
 
 - `src/main.js`: window creation, global shortcut registration, IPC handlers, external link guard. The logic is split out into pure modules.
   - `settings.js`: loads/saves `userData/settings.json` and validates shortcuts, window bounds, and the `discord` toggle (default on). A corrupted file is recovered with defaults.
-  - `shortcuts.js`: wrapper around `globalShortcut`. Media keys are fixed; only user-defined shortcuts can be changed.
+  - `shortcuts.js`: wrapper around `globalShortcut`. Registers only the user-defined shortcuts. Media keys are never registered: even an attempted `globalShortcut.register` of a media key makes Electron drop its SMTC session (verified on Electron 44.5.1 by querying Windows' SMTC session list). Unregistered, they reach YouTube Music's `mediaSession` through SMTC. Electron shows SMTC by default; no `enable-features` switch is needed.
   - `player.js`: controls playback by clicking player bar buttons via `executeJavaScript`. All YouTube Music DOM selectors are kept in one place, `SELECTORS`.
   - `presence.js`: Discord Rich Presence via `@xhayper/discord-rpc`. `main.js` polls `player.readTrack` every 3 seconds and sends the track as a "Listening" activity. When paused, the activity stays but drops the timestamps (Discord cannot freeze its progress bar) and adds a `paused` small image; that asset must be uploaded under that name in the Discord application's Rich Presence Art Assets. Activity text is not translated. It does not affect the app when Discord is closed and reconnects every 15 seconds. `buildActivity` and `sameActivity` are pure functions; the client is injectable for tests. The toggle lives in the app settings tab (`settings:setDiscord`). `CLIENT_ID` is a Discord application ID, which is not a secret.
   - `extension.js`: loads `extensions/better-lyrics/` into the same session and opens its options window.

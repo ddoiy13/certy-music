@@ -6,13 +6,14 @@ const MEDIA_KEYS = Object.freeze({
   prev: 'MediaPreviousTrack',
 });
 
+// Media keys are deliberately not registered: even attempting globalShortcut.register on one
+// makes Electron drop its SMTC session. Left alone, they reach the page through SMTC.
 function createShortcutManager(globalShortcut, handlers) {
   const custom = {};
 
   function applyAll(shortcuts) {
     const failed = [];
     for (const action of ACTIONS) {
-      if (!globalShortcut.register(MEDIA_KEYS[action], handlers[action])) failed.push(MEDIA_KEYS[action]);
       if (globalShortcut.register(shortcuts[action], handlers[action])) custom[action] = shortcuts[action];
       else failed.push(shortcuts[action]);
     }
