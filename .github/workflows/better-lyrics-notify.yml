@@ -1,0 +1,54 @@
+name: Better Lyrics update notice
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Notify Discord if upstream is newer than the bundled copy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not set"
+            exit 1
+          fi
+
+          BUNDLED="$(jq -r .version extensions/better-lyrics/manifest.json)"
+
+          # releases/latest skips pre-releases, which upstream uses for 4-part versions like 3.0.1.1
+          LATEST_JSON="$(gh api repos/better-lyrics/better-lyrics/releases/latest)"
+          TAG="$(echo "$LATEST_JSON" | jq -r .tag_name)"
+          URL="$(echo "$LATEST_JSON" | jq -r .html_url)"
+          LATEST="${TAG#v}"
+
+          echo "bundled=$BUNDLED upstream=$LATEST"
+
+          # An empty or null version means the lookup broke; fail loudly instead of staying silent
+          if [ -z "$BUNDLED" ] || [ "$BUNDLED" = "null" ] || [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then
+            echo "Could not read a version"
+            exit 1
+          fi
+
+          # Notify only when upstream is strictly newer. No state is kept, so this
+          # repeats on every run until the bundled copy catches up.
+          if [ "$LATEST" = "$BUNDLED" ] || [ "$(printf '%s\n%s\n' "$BUNDLED" "$LATEST" | sort -V | tail -n1)" != "$LATEST" ]; then
+            echo "Up to date, nothing to send"
+            exit 0
+          fi
+
+          jq -n \
+            --arg content "@everyone Better Lyrics $LATEST is out (bundled: $BUNDLED)
+          $URL" \
+            '{content: $content, allowed_mentions: {parse: ["everyone"]}}' |
+            curl -fsS -H 'Content-Type: application/json' -d @- "$WEBHOOK_URL"
