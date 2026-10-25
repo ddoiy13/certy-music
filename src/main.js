@@ -13,7 +13,6 @@ const LOGIN_URL = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=
 const PARTITION = 'persist:ytmusic';
 const ALLOWED_HOSTS = [/(^|\.)youtube\.com$/, /(^|\.)google\.[a-z]{2,3}(\.[a-z]{2})?$/];
 
-app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
 // Dev runs must not touch the packaged app's (cookie-encrypted) userData folder:
 // with the cookieEncryption fuse enabled, an unfused electron binary would corrupt that store.
 if (!app.isPackaged) app.setPath('userData', path.join(app.getPath('appData'), 'yt-music-electron-dev'));
