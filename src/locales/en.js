@@ -32,6 +32,8 @@ module.exports = {
 
   'bl.open': 'Open Better Lyrics settings',
 
+  'privacy.link': 'Privacy Policy',
+
   'error.requestFailed': 'The request failed.',
   'error.invalidRequest': 'Invalid request.',
   'error.notAllowed': 'This request is not allowed.',
