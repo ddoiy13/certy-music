@@ -32,6 +32,7 @@ When Discord Rich Presence is on (it is on by default; you can turn it off in th
 
 - the track title, artist, and album
 - the album art URL
+- links to the song, artist, and album pages on music.youtube.com (so people viewing your profile can click through)
 - whether playback is paused, and playback timestamps while playing
 
 Discord then shows this on your Discord profile, which other people may see depending on your Discord privacy settings. The app does not send this data to any server of its own. Discord's handling is covered by [Discord's Privacy Policy](https://discord.com/privacy).

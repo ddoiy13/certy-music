@@ -61,6 +61,32 @@ test('시작 시각이 같아도 곡 길이(종료 시각)가 바뀌면 다른 �
   assert.equal(sameActivity(stale, fixed), false);
 });
 
+test('링크는 music.youtube.com일 때만 활동에 붙고, 없으면 생략된다', () => {
+  const L = { songUrl: 'https://music.youtube.com/watch?v=abcdefghijk', artistUrl: 'https://music.youtube.com/channel/UC1', albumUrl: 'https://music.youtube.com/browse/MPREb_1' };
+  const a = buildActivity({ ...track, ...L });
+  assert.equal(a.detailsUrl, L.songUrl);
+  assert.equal(a.stateUrl, L.artistUrl);
+  assert.equal(a.largeImageUrl, L.albumUrl);
+  const b = buildActivity({ ...track, songUrl: 'https://evil.example/x', artistUrl: 'http://music.youtube.com/channel/UC1' });
+  assert.equal(b.detailsUrl, undefined);
+  assert.equal(b.stateUrl, undefined);
+  assert.equal(buildActivity(track).detailsUrl, undefined);
+  assert.equal(sameActivity(a, buildActivity({ ...track, ...L, songUrl: 'https://music.youtube.com/watch?v=zzzzzzzzzzz' })), false);
+});
+
+test('parseTrack은 byline 링크, videoId, 앨범 플레이리스트에서 안전한 링크만 뽑는다', () => {
+  const t = parseTrack({ title: 'S', byline: 'A • B', videoId: 'UwgUYZsyl7g', albumPlaylistId: 'OLAK5uy_kL-RC56', links: ['https://music.youtube.com/browse/MPREb_y', 'https://evil.example/channel/UC_z', 'https://music.youtube.com/channel/UC_x'] });
+  assert.equal(t.songUrl, 'https://music.youtube.com/watch?v=UwgUYZsyl7g');
+  assert.equal(t.artistUrl, 'https://music.youtube.com/channel/UC_x');
+  assert.equal(t.albumUrl, 'https://music.youtube.com/playlist?list=OLAK5uy_kL-RC56');
+  // 앨범 플레이리스트(OLAK5uy_) 형식이 아니면 앨범 링크를 만들지 않는다.
+  assert.equal(parseTrack({ title: 'S', byline: 'A', albumPlaylistId: 'RDAMVMabc', links: [] }).albumUrl, '');
+  assert.equal(parseTrack({ title: 'S', byline: 'A', links: [] }).albumUrl, '');
+  const n = parseTrack({ title: 'S', byline: 'A', videoId: 'bad id', links: [] });
+  assert.equal(n.songUrl, '');
+  assert.equal(n.albumUrl, '');
+});
+
 test('parseTrack은 byline을 아티스트/앨범으로 나누고 큰 아트로 바꾼다', () => {
   const t = parseTrack({ title: 'S', byline: 'Art • Alb • 2020', art: 'https://lh3.googleusercontent.com/x=w60-h60-l90-rj', playing: true, position: 1, duration: 2 });
   assert.equal(t.artist, 'Art');
@@ -115,4 +141,29 @@ test('presence: 연결 실패는 던지지 않고 재시도 대기에 들어간�
   p.update(track);
   assert.equal(n, 2);
   p.destroy();
+});
+
+test('readTrack은 앨범 플레이리스트를 한 번만 조회해 캐시하고, 잘못된 값은 버린다', async () => {
+  const { readTrack, resolveAlbumPlaylist } = require('../src/player');
+  let albumCalls = 0;
+  const wc = (albumReply) => ({
+    executeJavaScript: async (s) => {
+      if (s.includes('youtubei')) { albumCalls++; return albumReply; }
+      return { title: 'S', byline: 'A • B', videoId: 'UwgUYZsyl7g', albumBrowseId: 'MPREb_cache1', links: [] };
+    },
+  });
+  const ok = wc('OLAK5uy_good-id');
+  assert.equal((await readTrack(ok)).albumUrl, 'https://music.youtube.com/playlist?list=OLAK5uy_good-id');
+  await readTrack(ok);
+  assert.equal(albumCalls, 1);
+  // 형식이 다른 응답이나 잘못된 browseId는 링크 없이 지나간다.
+  assert.equal(await resolveAlbumPlaylist(wc('javascript:alert(1)'), 'MPREb_bad1'), '');
+  assert.equal(await resolveAlbumPlaylist(wc('OLAK5uy_x'), 'not-an-id'), '');
+  // 실패는 바로 재시도하지 않고, 시간이 지나면 다시 시도한다.
+  const before = albumCalls;
+  await resolveAlbumPlaylist(wc(''), 'MPREb_fail1', 1000);
+  await resolveAlbumPlaylist(wc(''), 'MPREb_fail1', 2000);
+  assert.equal(albumCalls, before + 1);
+  await resolveAlbumPlaylist(wc(''), 'MPREb_fail1', 40000);
+  assert.equal(albumCalls, before + 2);
 });

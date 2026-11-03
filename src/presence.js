@@ -15,16 +15,22 @@ function clip(text, fallback = '') {
   return padded.length > 128 ? padded.slice(0, 127) + '…' : padded;
 }
 
-// track: { title, artist, album, art, playing, position(초), duration(초) }
+// track: { title, artist, album, art, songUrl, artistUrl, albumUrl, playing, position(초), duration(초) }
+const isYtm = (u) => typeof u === 'string' && /^https:\/\/music\.youtube\.com\//.test(u);
+
 function buildActivity(track, now = Date.now()) {
   if (!track || !clip(track.title)) return null;
   // statusDisplayType DETAILS: 미니 프로필/멤버 목록에 앱 이름 대신 곡 제목을 표시한다.
   const activity = { type: LISTENING, statusDisplayType: STATUS_DISPLAY_DETAILS, details: clip(track.title) };
   const artist = clip(track.artist);
   if (artist) activity.state = artist;
+  // 클릭 링크: 곡 제목, 아티스트, 앨범 커버(앨범 페이지). 대응하는 텍스트가 있을 때만 붙인다.
+  if (isYtm(track.songUrl)) activity.detailsUrl = track.songUrl;
+  if (artist && isYtm(track.artistUrl)) activity.stateUrl = track.artistUrl;
   if (typeof track.art === 'string' && /^https:\/\//.test(track.art)) activity.largeImageKey = track.art;
   const album = clip(track.album);
   if (album) activity.largeImageText = album;
+  if (activity.largeImageKey && isYtm(track.albumUrl)) activity.largeImageUrl = track.albumUrl;
   if (!track.playing) {
     // 일시정지: 진행바가 흘러가지 않도록 타임스탬프를 빼고 작은 아이콘으로 표시한다.
     activity.smallImageKey = PAUSED_ICON;
@@ -39,7 +45,7 @@ function buildActivity(track, now = Date.now()) {
 
 function sameActivity(a, b) {
   if (!a || !b) return a === b;
-  for (const k of ['details', 'state', 'largeImageKey', 'largeImageText', 'smallImageKey']) if (a[k] !== b[k]) return false;
+  for (const k of ['details', 'state', 'largeImageKey', 'largeImageText', 'smallImageKey', 'detailsUrl', 'stateUrl', 'largeImageUrl']) if (a[k] !== b[k]) return false;
   const da = Math.abs((a.startTimestamp || 0) - (b.startTimestamp || 0));
   const de = Math.abs((a.endTimestamp || 0) - (b.endTimestamp || 0));
   return da <= SEEK_TOLERANCE_MS && de <= SEEK_TOLERANCE_MS;
