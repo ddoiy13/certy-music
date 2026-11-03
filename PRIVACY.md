@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-23
+Last updated: 2026-11-03
 
 Certy Music is an independent, unofficial Windows desktop app that wraps YouTube Music. This policy explains what data the app handles and where it goes.
 
@@ -26,12 +26,15 @@ Uninstalling the app does not necessarily remove the data folder. Delete it manu
 
 The app loads `music.youtube.com` and uses Google sign-in. Your listening, account, and device data is handled by Google under [Google's Privacy Policy](https://policies.google.com/privacy).
 
+To build the album link shown in Discord Rich Presence, the app asks YouTube Music (from inside its own page) for the album's playlist ID. This request goes to YouTube only, and the result is kept in memory while the app runs.
+
 ### Discord Rich Presence
 
 When Discord Rich Presence is on (it is on by default; you can turn it off in the app's settings tab), the app passes the following to your local Discord client:
 
 - the track title, artist, and album
 - the album art URL
+- links to the song, artist, and album pages on music.youtube.com (so people viewing your profile can click through)
 - whether playback is paused, and playback timestamps while playing
 
 Discord then shows this on your Discord profile, which other people may see depending on your Discord privacy settings. The app does not send this data to any server of its own. Discord's handling is covered by [Discord's Privacy Policy](https://discord.com/privacy).
