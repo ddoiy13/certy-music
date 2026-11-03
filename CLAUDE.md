@@ -20,6 +20,8 @@ A Windows Electron app wrapping `music.youtube.com`. It includes global shortcut
 - This PC's Git Bash has `gh` but no `jq`. To test a workflow's shell step locally, extract the `run:` block and put a small node stand-in for `jq` in a function (`jq() { node shim.js "$@"; }`); a script file on `PATH` was not found by Git Bash here.
 - SMTC check without eyeballing the flyout: in PowerShell, `RequestAsync()` on `Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager` (await via `WindowsRuntimeSystemExtensions.AsTask`), then print each session's `SourceAppUserModelId`, title, and `GetPlaybackInfo()` (status, `Controls.IsShuffleEnabled`, etc.). Other apps (browsers) show up too.
 - No media keys on this PC: simulate them with `user32 keybd_event` (`0xB3` play/pause, `0xB0` next, `0xB1` previous; key-down then key-up with flag 2).
+- Source, test, and doc files use CRLF. A script that replaces text with `\n` patterns silently misses; use the Edit tool, or normalize `\r\n` before replacing and convert back. Regex backslashes can also get lost in shell heredocs, so run `npm test` after a scripted edit.
+- To inspect YouTube Music internals with `scripts/cdp.js`: `document.querySelector('#movie_player').getVideoData()` gives `video_id` and the queue `list`; `ytcfg.get('INNERTUBE_CONTEXT')` plus `fetch('/youtubei/v1/browse?prettyPrint=false', ...)` returns page data. In an album response, read only `musicResponsiveHeaderRenderer`: other `OLAK5uy_` IDs belong to "Other versions" and the queue `list` can differ from the album's own ID.
 
 ## Git
 
