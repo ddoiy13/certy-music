@@ -54,9 +54,9 @@ test('지원하지 않는 locale 사전은 영어로 채워진다', () => {
 test('main/updater/settings가 쓰는 오류 키는 모두 사전에 있다', () => {
   const src = path.join(__dirname, '..', 'src');
   const used = new Set();
-  for (const f of ['main.js', 'settings.js', 'updater.js', 'preload.js']) {
+  for (const f of ['main.js', 'settings.js', 'updater.js', 'preload.js', 'tray.js']) {
     const text = fs.readFileSync(path.join(src, f), 'utf8');
-    for (const m of text.matchAll(/'((?:error|update|shortcut|discord|language|bl|app)\.[A-Za-z]+)'/g)) used.add(m[1]);
+    for (const m of text.matchAll(/'((?:error|update|shortcut|discord|language|bl|app|closeAction|tray)\.[A-Za-z]+)'/g)) used.add(m[1]);
   }
   for (const k of used) assert.ok(k in en, k);
 });

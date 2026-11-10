@@ -192,6 +192,38 @@ function languageRow(state) {
   return row;
 }
 
+function closeActionRow(state) {
+  const row = h('div', { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px' });
+  row.appendChild(h('div', { width: '140px' }, t('closeAction.label')));
+  const select = document.createElement('select');
+  Object.assign(select.style, {
+    padding: '6px 10px', background: '#212121', color: '#fff',
+    border: '1px solid rgba(255,255,255,0.3)', borderRadius: '8px', font: '14px Roboto, sans-serif',
+  });
+  for (const value of ['quit', 'tray']) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = t(`closeAction.${value}`);
+    select.appendChild(opt);
+  }
+  select.value = state.closeAction;
+  const err = h('span', { color: '#ff6b6b', fontSize: '12px' });
+  row.append(select, err);
+  select.addEventListener('change', async (e) => {
+    if (e.isTrusted !== true) return;
+    const want = select.value;
+    const r = await invokeSafe('settings:setCloseAction', want);
+    if (r && r.ok) {
+      err.textContent = '';
+      state.closeAction = want;
+    } else {
+      select.value = state.closeAction;
+      err.textContent = t((r && r.reason) || 'error.requestFailed');
+    }
+  });
+  return row;
+}
+
 const CHANNEL_LABELS = { stable: 'Stable', prerelease: 'Pre-Release' };
 let renderUpdate = null; // 현재 열린 패널의 상태 갱신 함수. 패널이 닫히면 null
 
@@ -309,6 +341,7 @@ async function renderPanel() {
   // );
   panel.appendChild(languageRow(state));
   for (const action of Object.keys(LABELS)) panel.appendChild(shortcutRow(action, state));
+  panel.appendChild(closeActionRow(state));
   panel.appendChild(discordRow(state));
   panel.appendChild(updateSection(state));
   if (state.betterLyrics) {

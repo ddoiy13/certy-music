@@ -29,6 +29,16 @@ module.exports = {
   'update.fallbackError': '업데이트 중 오류가 발생했습니다.',
   'update.notify': '새 버전이 있습니다. 앱 설정에서 업데이트할 수 있습니다. (v{version})',
 
+  'closeAction.label': 'X 클릭 시 (창을 닫을 시)',
+  'closeAction.quit': '프로그램 완전히 종료',
+  'closeAction.tray': '시스템 트레이로 최소화',
+
+  'tray.open': '열기',
+  'tray.playPause': '재생 / 일시정지',
+  'tray.prev': '이전 곡',
+  'tray.next': '다음 곡',
+  'tray.quit': '종료',
+
   'bl.open': 'Better Lyrics 설정 열기',
 
   'privacy.link': '개인정보 처리방침',
