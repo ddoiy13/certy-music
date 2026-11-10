@@ -144,3 +144,14 @@ test('load()는 저장된 구두점 단축키를 받아들인다', () => {
   fs.writeFileSync(f, JSON.stringify({ shortcuts: { playPause: 'Ctrl+Alt+`', next: 'Ctrl+Alt+Right', prev: 'Ctrl+Alt+Left' } }));
   assert.equal(s.load(f).shortcuts.playPause, 'Ctrl+Alt+`');
 });
+
+test('closeAction은 tray만 인정하고 나머지는 기본값 quit', () => {
+  const f = tmp();
+  assert.equal(s.load(f).closeAction, 'quit');
+  fs.writeFileSync(f, JSON.stringify({ closeAction: 'tray' }));
+  assert.equal(s.load(f).closeAction, 'tray');
+  for (const bad of ['Tray', 'hide', 1, null, {}]) {
+    fs.writeFileSync(f, JSON.stringify({ closeAction: bad }));
+    assert.equal(s.load(f).closeAction, 'quit', String(bad));
+  }
+});

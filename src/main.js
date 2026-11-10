@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Notification, screen, session, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, Notification, screen, session, shell, Tray } = require('electron');
 const path = require('node:path');
 const settingsStore = require('./settings');
 const { createShortcutManager, MEDIA_KEYS } = require('./shortcuts');
@@ -7,6 +7,7 @@ const betterLyrics = require('./extension');
 const { createPresence } = require('./presence');
 const { createUpdater, shouldNotify } = require('./updater');
 const i18n = require('./i18n');
+const { createTray, shouldHideOnClose } = require('./tray');
 
 const START_URL = 'https://music.youtube.com/';
 const LOGIN_URL = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=youtube&continue=' + encodeURIComponent('https://www.youtube.com/signin?action_handle_signin=true&next=' + encodeURIComponent('https://music.youtube.com/'));
@@ -33,6 +34,8 @@ let updater = null;
 let updateFirstTimer = null;
 let updateTimer = null;
 let notifiedVersion = null;
+let tray = null;
+let quitting = false; // 앱을 끄는 중이면 닫기 버튼 가로채기를 멈춘다
 const UPDATE_FIRST_CHECK_MS = 10 * 1000;
 const UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -126,7 +129,7 @@ function createWindow() {
   });
   if (b.maximized) win.maximize();
 
-  win.on('close', () => {
+  win.on('close', (event) => {
     try {
       const n = win.getNormalBounds();
       settings.window = { width: n.width, height: n.height, x: n.x, y: n.y, maximized: win.isMaximized() };
@@ -134,7 +137,14 @@ function createWindow() {
     } catch (err) {
       console.error('Failed to save window state:', err);
     }
+    // 트레이 모드에서는 창만 숨기고 앱과 재생은 계속 둔다. 종료는 트레이 메뉴로 한다.
+    if (shouldHideOnClose(settings.closeAction, quitting)) {
+      event.preventDefault();
+      win.hide();
+    }
   });
+  // OS 종료 때 닫기를 막으면 종료가 지연될 수 있다.
+  win.on('session-end', () => { quitting = true; });
   // window.open / will-navigate guards are installed globally in 'web-contents-created'.
   // Logged-out visits to music.youtube.com get redirected to a promo page (/premium, /musicpremium).
   // Send the user to Google login instead. One-shot so a logged-in account that is also
@@ -156,6 +166,30 @@ function createWindow() {
 
 function controlPlayer(action) {
   if (win && !win.isDestroyed()) player.control(win.webContents, action);
+}
+
+// 숨겨졌거나 최소화된 창을 다시 보여 준다.
+function showWindow() {
+  if (!win || win.isDestroyed()) {
+    createWindow();
+    return;
+  }
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+// 트레이 아이콘은 닫기 설정과 상관없이 항상 둔다. 아이콘은 패키지에 포함된 assets/app.ico를 쓴다.
+function startTray() {
+  const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets/app.ico'));
+  tray = createTray(
+    { Tray, Menu },
+    {
+      icon,
+      getTranslator: () => i18n.createTranslator(currentLocale()),
+      actions: { open: showWindow, ...handlers, quit: () => app.quit() },
+    },
+  );
 }
 
 // 곡 정보를 주기적으로 읽어 Discord 활동으로 반영한다. 같은 상태면 presence가 다시 보내지 않는다.
@@ -241,6 +275,7 @@ ipcMain.handle('settings:get', (event) => {
     autoUpdate: settings.autoUpdate,
     updateChannel: settings.updateChannel,
     language: settings.language,
+    closeAction: settings.closeAction,
     autoLocale: autoLocale(),
     update: updater ? updater.getState() : null,
   };
@@ -257,7 +292,21 @@ ipcMain.handle('settings:setLanguage', (event, language) => {
     settings.language = previous;
     return { ok: false, reason: 'error.saveFailed' };
   }
+  if (tray) tray.refresh(); // 트레이 메뉴 문구도 새 언어로 바꾼다
   return { ok: true, ...i18nState() };
+});
+ipcMain.handle('settings:setCloseAction', (event, action) => {
+  if (!trusted(event) || !settingsStore.CLOSE_ACTIONS.includes(action)) return { ok: false, reason: 'error.notAllowed' };
+  const previous = settings.closeAction;
+  settings.closeAction = action;
+  try {
+    settingsStore.save(settingsFile(), settings);
+  } catch (err) {
+    console.error('Failed to save the close action setting:', err);
+    settings.closeAction = previous;
+    return { ok: false, reason: 'error.saveFailed' };
+  }
+  return { ok: true, closeAction: action };
 });
 ipcMain.handle('settings:setDiscord', (event, on) => {
   if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: 'error.notAllowed' };
@@ -332,9 +381,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (!win) return;
-    if (win.isMinimized()) win.restore();
-    win.focus();
+    if (win) showWindow(); // 트레이로 숨겨져 있어도 다시 보이게 한다
   });
 
   app.whenReady().then(async () => {
@@ -342,6 +389,7 @@ if (!app.requestSingleInstanceLock()) {
     blExt = await betterLyrics.load(ses);
     settings = settingsStore.load(settingsFile());
     createWindow();
+    startTray();
     shortcuts = createShortcutManager(globalShortcut, handlers);
     const failed = shortcuts.applyAll(settings.shortcuts);
     if (failed.length) console.warn('Failed to register shortcuts:', failed.join(', '));
@@ -350,7 +398,9 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.on('window-all-closed', () => app.quit());
+  app.on('before-quit', () => { quitting = true; });
   app.on('will-quit', () => {
+    if (tray) tray.destroy();
     globalShortcut.unregisterAll();
     clearInterval(presenceTimer);
     clearTimeout(updateFirstTimer);

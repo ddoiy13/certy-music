@@ -10,6 +10,16 @@ module.exports = {
 
   'discord.label': 'Show the current track as Discord activity',
 
+  'closeAction.label': 'When clicking X (close window)',
+  'closeAction.quit': 'Quit the program completely',
+  'closeAction.tray': 'Minimize program to the system tray',
+
+  'tray.open': 'Open',
+  'tray.playPause': 'Play / Pause',
+  'tray.prev': 'Previous track',
+  'tray.next': 'Next track',
+  'tray.quit': 'Quit',
+
   'language.label': 'Language',
   'language.auto': 'Auto ({language})',
 

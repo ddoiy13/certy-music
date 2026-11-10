@@ -9,6 +9,7 @@ const DEFAULT_SHORTCUTS = Object.freeze({
 });
 const DEFAULT_WINDOW = Object.freeze({ width: 1280, height: 800 });
 const CHANNELS = Object.freeze(['stable', 'prerelease']);
+const CLOSE_ACTIONS = Object.freeze(['quit', 'tray']);
 const { LANGUAGES } = require('./i18n');
 
 const MODIFIER_ALIASES = { ctrl: 'Ctrl', control: 'Ctrl', alt: 'Alt', shift: 'Shift', super: 'Super', meta: 'Super' };
@@ -111,6 +112,7 @@ function load(file) {
     autoUpdate: raw.autoUpdate === true,
     updateChannel: raw.updateChannel === 'prerelease' ? 'prerelease' : 'stable',
     language: LANGUAGES.includes(raw.language) ? raw.language : 'auto',
+    closeAction: CLOSE_ACTIONS.includes(raw.closeAction) ? raw.closeAction : 'quit',
   };
 }
 
@@ -121,4 +123,4 @@ function save(file, settings) {
   fs.renameSync(tmp, file);
 }
 
-module.exports = { ACTIONS, CHANNELS, LANGUAGES, DEFAULT_SHORTCUTS, validateAccelerator, load, save };
+module.exports = { ACTIONS, CHANNELS, CLOSE_ACTIONS, LANGUAGES, DEFAULT_SHORTCUTS, validateAccelerator, load, save };
