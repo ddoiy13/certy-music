@@ -32,7 +32,7 @@ module.exports = {
   'update.checking': 'Checking for updates…',
   'update.uptodate': 'You are up to date.',
   'update.available': 'Version v{version} is available to install.',
-  'update.availableDowngrade': 'You can revert to the earlier version v{version}. It will not be installed automatically.',
+  'update.availableDowngrade': 'You can revert to the earlier version v{version}.',
   'update.downloading': 'Downloading v{version}… {percent}%',
   'update.ready': 'v{version} is ready to install.',
   'update.auto': 'Auto-update (installs when the app quits.)',

@@ -21,7 +21,7 @@ module.exports = {
   'update.checking': '업데이트를 확인하는 중…',
   'update.uptodate': '최신 버전입니다.',
   'update.available': '새 버전 v{version}을 설치할 수 있습니다.',
-  'update.availableDowngrade': '이전 버전 v{version}으로 되돌릴 수 있습니다. 자동으로 설치되지 않습니다.',
+  'update.availableDowngrade': '이전 버전 v{version}으로 되돌릴 수 있습니다.',
   'update.downloading': 'v{version} 내려받는 중… {percent}%',
   'update.ready': 'v{version} 설치 준비가 끝났습니다.',
   'update.auto': '자동 업데이트 (앱을 종료할 때 업데이트됨.)',
