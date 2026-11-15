@@ -1,4 +1,4 @@
-@import url("image-highlights.css?v=3.0.1");
+@import url("image-highlights.css?v=3.0.2");
 
 /* Resolve the default stack at each language boundary. A root-level var() would freeze
    the host's language-specific fallback before the lyric/translation language is known.
