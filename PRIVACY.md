@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-03
+Last updated: 2026-11-26
 
 Certy Music is an independent, unofficial Windows desktop app that wraps YouTube Music. This policy explains what data the app handles and where it goes.
 
@@ -15,7 +15,7 @@ Certy Music is an independent, unofficial Windows desktop app that wraps YouTube
 The following data stays on your PC in the app's data folder (`%APPDATA%`) and is not sent to the developer.
 
 - **Login session (cookies).** Created when you sign in to Google/YouTube Music. In packaged builds the cookie store is encrypted with Windows DPAPI, which protects it from other Windows accounts and from copying the files to another PC, but not from software running under your own Windows account. See "Security Warning" in the [README](README.md).
-- **App settings.** Shortcut keys, window size and position, language, update channel, auto-update, and Discord on/off.
+- **App settings.** Shortcut keys, window size and position, language, update channel, auto-update, Discord on/off, and whether Discord activity is hidden while paused.
 - **Better Lyrics settings.** Stored in the bundled extension's local storage.
 
 Uninstalling the app does not necessarily remove the data folder. Delete it manually if you want it gone.
@@ -36,6 +36,8 @@ When Discord Rich Presence is on (it is on by default; you can turn it off in th
 - the album art URL
 - links to the song, artist, and album pages on music.youtube.com (so people viewing your profile can click through)
 - whether playback is paused, and playback timestamps while playing
+
+You can also choose to hide the activity while paused (off by default). The app then clears the activity when playback pauses and sends it again when playback resumes.
 
 Discord then shows this on your Discord profile, which other people may see depending on your Discord privacy settings. The app does not send this data to any server of its own. Discord's handling is covered by [Discord's Privacy Policy](https://discord.com/privacy).
 
