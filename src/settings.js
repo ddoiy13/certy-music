@@ -109,6 +109,7 @@ function load(file) {
     shortcuts: loadShortcuts(raw),
     window: loadWindow(raw),
     discord: raw.discord !== false,
+    discordHidePaused: raw.discordHidePaused === true,
     autoUpdate: raw.autoUpdate === true,
     updateChannel: raw.updateChannel === 'prerelease' ? 'prerelease' : 'stable',
     language: LANGUAGES.includes(raw.language) ? raw.language : 'auto',

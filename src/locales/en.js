@@ -9,6 +9,7 @@ module.exports = {
   'shortcut.recording': 'Press a key… (Esc to cancel)',
 
   'discord.label': 'Show the current track as Discord activity',
+  'discord.hidePaused': 'Hide the Discord activity while paused',
 
   'closeAction.label': 'When clicking X (close window)',
   'closeAction.quit': 'Quit the program completely',

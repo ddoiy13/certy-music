@@ -196,6 +196,7 @@ function startTray() {
 function startPresence() {
   presence = createPresence();
   presence.setEnabled(settings.discord);
+  presence.setHidePaused(settings.discordHidePaused);
   presenceTimer = setInterval(async () => {
     if (!settings.discord || !win || win.isDestroyed()) return;
     presence.update(await player.readTrack(win.webContents));
@@ -271,6 +272,7 @@ ipcMain.handle('settings:get', (event) => {
     mediaKeys: MEDIA_KEYS,
     betterLyrics: !!blExt,
     discord: settings.discord,
+    discordHidePaused: settings.discordHidePaused,
     version: app.getVersion(),
     autoUpdate: settings.autoUpdate,
     updateChannel: settings.updateChannel,
@@ -321,6 +323,20 @@ ipcMain.handle('settings:setDiscord', (event, on) => {
   }
   if (presence) presence.setEnabled(on);
   return { ok: true, discord: on };
+});
+ipcMain.handle('settings:setDiscordHidePaused', (event, on) => {
+  if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: 'error.notAllowed' };
+  const previous = settings.discordHidePaused;
+  settings.discordHidePaused = on;
+  try {
+    settingsStore.save(settingsFile(), settings);
+  } catch (err) {
+    console.error('Failed to save the Discord hide-when-paused setting:', err);
+    settings.discordHidePaused = previous;
+    return { ok: false, reason: 'error.saveFailed' };
+  }
+  if (presence) presence.setHidePaused(on);
+  return { ok: true, discordHidePaused: on };
 });
 ipcMain.handle('settings:setAutoUpdate', (event, on) => {
   if (!trusted(event) || typeof on !== 'boolean') return { ok: false, reason: 'error.notAllowed' };

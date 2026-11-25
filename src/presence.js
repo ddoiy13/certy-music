@@ -63,6 +63,7 @@ function createPresence({ clientId = CLIENT_ID, createClient, retryMs = RETRY_MS
   let desired = null; // 마지막으로 원하는 활동 (null이면 비움)
   let applied; // 마지막으로 Discord에 반영한 활동 (undefined = 아직 없음)
   let enabled = true;
+  let hidePaused = false;
 
   function drop() {
     const c = client;
@@ -109,9 +110,13 @@ function createPresence({ clientId = CLIENT_ID, createClient, retryMs = RETRY_MS
   return {
     update(track) {
       if (!enabled) return;
-      desired = buildActivity(track, now());
+      desired = hidePaused && track && !track.playing ? null : buildActivity(track, now());
       if (desired) connect();
       flush();
+    },
+    // 다음 update부터 적용된다.
+    setHidePaused(on) {
+      hidePaused = !!on;
     },
     setEnabled(on) {
       enabled = !!on;
