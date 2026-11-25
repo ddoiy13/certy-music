@@ -136,26 +136,41 @@ function shortcutRow(action, state) {
   return row;
 }
 
-function discordRow(state) {
-  const row = h('label', { display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0 16px', cursor: 'pointer' });
+function checkboxRow(channel, checked, label, style, onChange) {
+  const row = h('label', { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', ...style });
   const box = document.createElement('input');
   box.type = 'checkbox';
-  box.checked = !!state.discord;
+  box.checked = !!checked;
   Object.assign(box.style, { width: '16px', height: '16px', cursor: 'pointer' });
   const err = h('span', { color: '#ff6b6b', fontSize: '12px' });
-  row.append(box, h('span', {}, t('discord.label')), err);
+  row.append(box, h('span', {}, label), err);
   box.addEventListener('change', async (e) => {
     if (e.isTrusted !== true) return;
     const want = box.checked;
-    const r = await invokeSafe('settings:setDiscord', want);
+    const r = await invokeSafe(channel, want);
     if (r && r.ok) {
       err.textContent = '';
     } else {
       box.checked = !want;
       err.textContent = t((r && r.reason) || 'error.requestFailed');
     }
+    if (onChange) onChange(box.checked);
   });
-  return row;
+  return { row, box };
+}
+
+function discordRows(state) {
+  const group = h('div', { margin: '8px 0 16px' });
+  // Discord 표시를 끄면 하위 옵션은 의미가 없으므로 비활성화한다.
+  const setSubEnabled = (on) => {
+    sub.box.disabled = !on;
+    sub.row.style.opacity = on ? '1' : '0.5';
+  };
+  const main = checkboxRow('settings:setDiscord', state.discord, t('discord.label'), {}, setSubEnabled);
+  const sub = checkboxRow('settings:setDiscordHidePaused', state.discordHidePaused, t('discord.hidePaused'), { margin: '8px 0 0 28px' });
+  setSubEnabled(!!state.discord);
+  group.append(main.row, sub.row);
+  return group;
 }
 
 function languageRow(state) {
@@ -342,7 +357,7 @@ async function renderPanel() {
   panel.appendChild(languageRow(state));
   for (const action of Object.keys(LABELS)) panel.appendChild(shortcutRow(action, state));
   panel.appendChild(closeActionRow(state));
-  panel.appendChild(discordRow(state));
+  panel.appendChild(discordRows(state));
   panel.appendChild(updateSection(state));
   if (state.betterLyrics) {
     const open = h('button', { ...BTN, marginTop: '16px' }, t('bl.open'));

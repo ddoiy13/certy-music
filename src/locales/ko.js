@@ -8,6 +8,7 @@ module.exports = {
   'shortcut.recording': '키를 누르세요… (Esc로 취소)',
 
   'discord.label': 'Discord 활동으로 지금 듣는 곡 표시',
+  'discord.hidePaused': '일시정지 중에는 Discord 활동 숨기기',
 
   'language.label': '언어',
   'language.auto': '자동 ({language})',

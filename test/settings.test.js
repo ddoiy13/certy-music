@@ -83,6 +83,17 @@ test('discord 설정은 기본 true이고 false만 끈다', () => {
   assert.equal(s.load(f).discord, true);
 });
 
+test('discordHidePaused는 기본 false이고 true일 때만 켜진다', () => {
+  const f = tmp();
+  assert.equal(s.load(f).discordHidePaused, false);
+  fs.writeFileSync(f, JSON.stringify({ discordHidePaused: true }));
+  assert.equal(s.load(f).discordHidePaused, true);
+  for (const bad of ['yes', 1, null, {}]) {
+    fs.writeFileSync(f, JSON.stringify({ discordHidePaused: bad }));
+    assert.equal(s.load(f).discordHidePaused, false, String(bad));
+  }
+});
+
 test('autoUpdate는 기본 false이고 true일 때만 켜진다', () => {
   const f = tmp();
   assert.equal(s.load(f).autoUpdate, false);

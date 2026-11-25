@@ -123,6 +123,36 @@ test('presence: 연결 후 활동을 한 번만 반영하고, 일시정지하면
   p.destroy();
 });
 
+test('presence: 일시정지 숨기기를 켜면 일시정지 때 활동을 비우고, 재생하면 다시 보낸다', async () => {
+  const log = [];
+  const p = createPresence({ createClient: () => fakeClient(log) });
+  const tick = () => new Promise((r) => setImmediate(r));
+  p.setHidePaused(true);
+  p.update(track);
+  await tick();
+  await tick();
+  p.update({ ...track, playing: false });
+  await tick();
+  p.update(track);
+  await tick();
+  assert.deepEqual(log, ['login', ['set', 'Song'], 'clear', ['set', 'Song']]);
+  // 끄면 다음 갱신부터 일시정지 활동을 다시 보여준다.
+  p.setHidePaused(false);
+  p.update({ ...track, playing: false });
+  await tick();
+  assert.deepEqual(log.at(-1), ['set', 'Song']);
+  p.destroy();
+});
+
+test('presence: 숨기기가 켜진 채 일시정지 상태로 시작하면 Discord에 연결하지 않는다', () => {
+  const log = [];
+  const p = createPresence({ createClient: () => fakeClient(log) });
+  p.setHidePaused(true);
+  p.update({ ...track, playing: false });
+  assert.deepEqual(log, []);
+  p.destroy();
+});
+
 test('presence: 연결 실패는 던지지 않고 재시도 대기에 들어간다', async () => {
   let n = 0;
   const failing = () => ({
