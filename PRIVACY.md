@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-26
+Last updated: 2026-11-27
 
 Certy Music is an independent, unofficial Windows desktop app that wraps YouTube Music. This policy explains what data the app handles and where it goes.
 
@@ -9,6 +9,7 @@ Certy Music is an independent, unofficial Windows desktop app that wraps YouTube
 - The app itself has no analytics, telemetry, or crash reporting, and the developer runs no server that receives your data.
 - Your Google login session is handled by YouTube Music and Google, and is stored only on your PC.
 - Some features send limited information to third parties (Discord, GitHub, and the bundled Better Lyrics extension's lyrics services). Details are below.
+- If you choose to send a bug report through the Google Form, the developer receives what you submit.
 
 ## Data stored on your PC
 
@@ -45,6 +46,14 @@ Discord then shows this on your Discord profile, which other people may see depe
 
 The app checks GitHub Releases for new versions (shortly after start and every 6 hours) and downloads installers from there. GitHub receives the usual connection information, such as your IP address and the app version, under [GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
+### Bug reports (Google Forms)
+
+The app's settings tab has a link to a [bug report form](https://forms.gle/MU6j6R96dxfBBwrZA) hosted on Google Forms. Clicking it opens the form in your default browser. The app does not fill in or attach anything.
+
+The form does not collect your email address and does not require you to sign in. You can optionally include a link to a screenshot or video. The developer can open that link and see whatever it shows, so check it for personal information first. The linked file is hosted by the service you chose, under that service's own privacy practices.
+
+Nothing is reported unless you submit the form. If you do, your answers, including any link, are sent to Google and the developer can read them. They are used to investigate and fix problems. Do not include passwords or other sensitive information. Google's handling is covered by [Google's Privacy Policy](https://policies.google.com/privacy).
+
 ### Better Lyrics extension (third-party services)
 
 The app bundles the [Better Lyrics](https://github.com/better-lyrics/better-lyrics) extension to show synced lyrics. To fetch lyrics, the extension contacts third-party services, which include:
@@ -58,7 +67,7 @@ These requests include information about the track you are playing so that match
 
 ## What the developer collects
 
-Nothing. The developer of Certy Music does not receive, store, or process your personal data. The developer can see only the aggregate download statistics that GitHub shows for releases.
+The app sends no data to the developer by itself. The developer receives only what you choose to send, such as a bug report form response (see "Bug reports" above) or a GitHub issue. The developer can also see the aggregate download statistics that GitHub shows for releases.
 
 ## Children
 
@@ -70,4 +79,4 @@ If this policy changes, the new version will be published in this repository wit
 
 ## Contact
 
-Open an issue at <https://github.com/ddoiy13/certy-music/issues>.
+Open an issue at <https://github.com/ddoiy13/certy-music/issues>. GitHub issues are public, so do not include personal information.
