@@ -43,6 +43,7 @@ module.exports = {
 
   'bl.open': 'Open Better Lyrics settings',
 
+  'bugReport.link': 'Report a bug',
   'privacy.link': 'Privacy Policy',
 
   'error.requestFailed': 'The request failed.',

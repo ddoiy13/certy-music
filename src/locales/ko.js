@@ -42,6 +42,7 @@ module.exports = {
 
   'bl.open': 'Better Lyrics 설정 열기',
 
+  'bugReport.link': '버그 제보',
   'privacy.link': '개인정보 처리방침',
 
   'error.requestFailed': '요청에 실패했습니다.',
