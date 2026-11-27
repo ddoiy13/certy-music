@@ -4,6 +4,9 @@ const TAB_ID = 'app-settings-tab';
 const PANEL_ID = 'app-settings-panel';
 const LABELS = { playPause: 'shortcut.playPause', next: 'shortcut.next', prev: 'shortcut.prev' };
 const PRIVACY_URL = 'https://github.com/ddoiy13/certy-music/blob/main/PRIVACY.md'; // keep in sync with build/installer.nsh
+// Keep the short link: forms.gle is not in main.js ALLOWED_HOSTS, so it opens in the default browser.
+// A docs.google.com URL would open inside an app window.
+const BUG_REPORT_URL = 'https://forms.gle/MU6j6R96dxfBBwrZA'; // also in PRIVACY.md
 const LANGUAGE_NAMES = { en: 'English', ko: '한국어' }; // 각 언어는 항상 자기 이름으로 표시한다
 
 // 샌드박스된 preload는 로컬 모듈을 require할 수 없어, 문구 사전은 main에서 IPC로 받는다.
@@ -339,6 +342,14 @@ function updateSection(state) {
   return box;
 }
 
+function externalLink(url, text, marginTop) {
+  const link = h('a', { display: 'block', marginTop, color: '#8ab4f8', textDecoration: 'underline' }, text);
+  link.setAttribute('href', url);
+  link.setAttribute('target', '_blank');
+  link.setAttribute('rel', 'noopener noreferrer');
+  return link;
+}
+
 async function renderPanel() {
   let state = null;
   try {
@@ -368,11 +379,8 @@ async function renderPanel() {
     panel.appendChild(open);
   }
   // target=_blank goes through the main-process window-open handler, which sends https links to the default browser.
-  const privacy = h('a', { display: 'block', marginTop: '24px', color: '#8ab4f8', textDecoration: 'underline' }, t('privacy.link'));
-  privacy.setAttribute('href', PRIVACY_URL);
-  privacy.setAttribute('target', '_blank');
-  privacy.setAttribute('rel', 'noopener noreferrer');
-  panel.appendChild(privacy);
+  panel.appendChild(externalLink(BUG_REPORT_URL, t('bugReport.link'), '24px'));
+  panel.appendChild(externalLink(PRIVACY_URL, t('privacy.link'), '8px'));
   return panel;
 }
 
