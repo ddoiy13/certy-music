@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, Notification, screen, session, shell, Tray } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, screen, session, shell, Tray } = require('electron');
 const path = require('node:path');
 const settingsStore = require('./settings');
 const { createShortcutManager, MEDIA_KEYS } = require('./shortcuts');
@@ -8,6 +8,7 @@ const { createPresence } = require('./presence');
 const { createUpdater, shouldNotify } = require('./updater');
 const i18n = require('./i18n');
 const { createTray, shouldHideOnClose } = require('./tray');
+const { createIcons, createThumbar } = require('./thumbar');
 
 const START_URL = 'https://music.youtube.com/';
 const LOGIN_URL = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=youtube&continue=' + encodeURIComponent('https://www.youtube.com/signin?action_handle_signin=true&next=' + encodeURIComponent('https://music.youtube.com/'));
@@ -35,6 +36,7 @@ let updateFirstTimer = null;
 let updateTimer = null;
 let notifiedVersion = null;
 let tray = null;
+let thumbar = null;
 let quitting = false; // 앱을 끄는 중이면 닫기 버튼 가로채기를 멈춘다
 const UPDATE_FIRST_CHECK_MS = 10 * 1000;
 const UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -161,6 +163,10 @@ function createWindow() {
       }
     } catch {}
   });
+  win.webContents.on('media-started-playing', () => thumbar.setPlaying(true));
+  win.webContents.on('media-paused', () => thumbar.setPlaying(false));
+  win.on('show', () => thumbar.refresh());
+  thumbar.setPlaying(false); // 첫 버튼을 붙이고, 이전 창의 재생 상태를 지운다
   win.loadURL(START_URL);
 }
 
@@ -295,6 +301,7 @@ ipcMain.handle('settings:setLanguage', (event, language) => {
     return { ok: false, reason: 'error.saveFailed' };
   }
   if (tray) tray.refresh(); // 트레이 메뉴 문구도 새 언어로 바꾼다
+  if (thumbar) thumbar.refresh();
   return { ok: true, ...i18nState() };
 });
 ipcMain.handle('settings:setCloseAction', (event, action) => {
@@ -404,6 +411,16 @@ if (!app.requestSingleInstanceLock()) {
     const ses = session.fromPartition(PARTITION);
     blExt = await betterLyrics.load(ses);
     settings = settingsStore.load(settingsFile());
+    const darkIcons = createIcons(nativeImage, true);
+    const lightIcons = createIcons(nativeImage, false);
+    thumbar = createThumbar({
+      getWindow: () => win,
+      getTranslator: () => i18n.createTranslator(currentLocale()),
+      // 작업표시줄은 앱 테마가 아니라 Windows 시스템 테마를 따른다.
+      getIcons: () => (nativeTheme.shouldUseDarkColorsForSystemIntegratedUI ? darkIcons : lightIcons),
+      actions: handlers,
+    });
+    nativeTheme.on('updated', () => thumbar.refresh());
     createWindow();
     startTray();
     shortcuts = createShortcutManager(globalShortcut, handlers);
