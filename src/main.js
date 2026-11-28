@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, Notification, screen, session, shell, Tray } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, screen, session, shell, Tray } = require('electron');
 const path = require('node:path');
 const settingsStore = require('./settings');
 const { createShortcutManager, MEDIA_KEYS } = require('./shortcuts');
@@ -411,12 +411,16 @@ if (!app.requestSingleInstanceLock()) {
     const ses = session.fromPartition(PARTITION);
     blExt = await betterLyrics.load(ses);
     settings = settingsStore.load(settingsFile());
+    const darkIcons = createIcons(nativeImage, true);
+    const lightIcons = createIcons(nativeImage, false);
     thumbar = createThumbar({
       getWindow: () => win,
       getTranslator: () => i18n.createTranslator(currentLocale()),
-      icons: createIcons(nativeImage),
+      // 작업표시줄은 앱 테마가 아니라 Windows 시스템 테마를 따른다.
+      getIcons: () => (nativeTheme.shouldUseDarkColorsForSystemIntegratedUI ? darkIcons : lightIcons),
       actions: handlers,
     });
+    nativeTheme.on('updated', () => thumbar.refresh());
     createWindow();
     startTray();
     shortcuts = createShortcutManager(globalShortcut, handlers);

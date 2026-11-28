@@ -21,25 +21,26 @@ const SHAPES = {
   next: [triangle(7, 21), bar(21, 25)],
 };
 
-// 32x32 BGRA. 흰색 도형, 배경은 투명.
-function drawIcon(shape) {
+// 32x32 BGRA, 배경은 투명. 밝은 작업표시줄에서는 흰색이 보이지 않아 어두운 색을 쓴다.
+function drawIcon(shape, darkTaskbar = true) {
+  const gray = darkTaskbar ? 255 : 32;
   const buffer = Buffer.alloc(SIZE * SIZE * 4);
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
       if (SHAPES[shape].some((inside) => inside(x + 0.5, y + 0.5))) {
         const at = (y * SIZE + x) * 4;
-        buffer.fill(255, at, at + 4);
+        buffer.set([gray, gray, gray, 255], at);
       }
     }
   }
   return buffer;
 }
 
-function createIcons(nativeImage) {
+function createIcons(nativeImage, darkTaskbar = true) {
   return Object.fromEntries(
     Object.keys(SHAPES).map((shape) => [
       shape,
-      nativeImage.createFromBitmap(drawIcon(shape), { width: SIZE, height: SIZE, scaleFactor: 2 }),
+      nativeImage.createFromBitmap(drawIcon(shape, darkTaskbar), { width: SIZE, height: SIZE, scaleFactor: 2 }),
     ]),
   );
 }
@@ -52,13 +53,13 @@ function buildButtons(t, playing, icons, actions) {
   ];
 }
 
-function createThumbar({ getWindow, getTranslator, icons, actions }) {
+function createThumbar({ getWindow, getTranslator, getIcons, actions }) {
   let playing = false;
   function refresh() {
     const win = getWindow();
     if (!win || win.isDestroyed()) return;
     try {
-      win.setThumbarButtons(buildButtons(getTranslator(), playing, icons, actions));
+      win.setThumbarButtons(buildButtons(getTranslator(), playing, getIcons(), actions));
     } catch (err) {
       console.error('Failed to set the taskbar buttons:', err);
     }
